@@ -1,0 +1,67 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Package manager lock files (keep one, ignore others)
+# Uncomment the ones you don't use:
+package-lock.json
+bun.lockb
+
+# Testing
+coverage/
+*.lcov
+.nyc_output
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Production
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment variables
+.env
+
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Prisma
+# Keep schema.prisma, but ignore generated client
+# Uncomment if you want to ignore migrations:
+# prisma/migrations/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

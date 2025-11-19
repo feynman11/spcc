@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@theme {
+  /* Border Radius */
+  --radius: 8px;
+  --radius-secondary: 4px;
+  --radius-container: 12px;
+
+  /* Box Shadows */
+  --shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  --shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.12);
+
+  /* Colors - primary */
+  --color-primary: #4F46E5;
+  --color-primary-hover: #4338CA;
+  
+  /* Colors - secondary */
+  --color-secondary: #6B7280;
+  --color-secondary-hover: #4B5563;
+  
+  /* Colors - accent */
+  --color-accent: #8B5CF6;
+  --color-accent-hover: #7C3AED;
+
+  /* Spacing */
+  --spacing-form-field: 16px;
+  --spacing-section: 32px;
+
+  /* Font Family */
+  --font-sans: "Inter var", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+/* Custom utilities for border radius */
+.rounded-container {
+  border-radius: var(--radius-container);
+}
+
+.rounded-secondary {
+  border-radius: var(--radius-secondary);
+}
+
+:root {
+  --color-light: #ffffff;
+  --color-dark: #171717;
+  --spcc-red: #dc2626;
+  --spcc-red-hover: #b91c1c;
+  --spcc-red-light: #fef2f2;
+  --spcc-dark: #1f2937;
+  --spcc-gray: #6b7280;
+}
+
+.accent-text {
+  @apply text-slate-600;
+}
+
+body {
+  font-family:
+    "Inter Variable",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    "Noto Sans",
+    sans-serif,
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Segoe UI Symbol",
+    "Noto Color Emoji";
+  color: var(--color-dark);
+  background: var(--color-light);
+}
+
+/* only use this to update the style of the auth input fields. use a different class for all other input fields */
+.auth-input-field {
+  @apply w-full px-4 py-3 bg-white border border-gray-200 outline-none transition-shadow shadow-sm hover:shadow;
+  border-radius: var(--radius-container);
+}
+
+.auth-input-field:focus {
+  border-color: var(--color-primary);
+  --tw-ring-color: var(--color-primary);
+  --tw-ring-width: 1px;
+}
+
+/* only use this to update the style of the auth buttons. use the button class for all other buttons */
+.auth-button {
+  @apply w-full px-4 py-3 rounded text-white font-semibold transition-colors shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed;
+  background-color: var(--color-primary);
+}
+
+.auth-button:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
