@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { minioClient, BUCKET_NAME, ensureBucket } from "@/lib/minio";
+import { minioClient, getBucketName, ensureBucket } from "@/lib/minio";
 import { randomUUID } from "crypto";
 import path from "path";
 
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     // Upload to MinIO
     await minioClient.putObject(
-      BUCKET_NAME,
+      getBucketName(),
       objectName,
       buffer,
       buffer.length,

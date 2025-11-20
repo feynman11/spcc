@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
+  trustHost: true, // Required for running in containers
   providers: [
     Google,
     Credentials({

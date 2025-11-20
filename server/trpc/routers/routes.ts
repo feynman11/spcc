@@ -198,11 +198,11 @@ export const routesRouter = router({
   getGpxDownloadUrl: publicProcedure
     .input(z.object({ objectName: z.string() }))
     .query(async ({ ctx, input }) => {
-      const { minioClient, BUCKET_NAME } = await import("@/lib/minio");
+      const { minioClient, getBucketName } = await import("@/lib/minio");
       
       // Generate presigned URL (valid for 1 hour)
       const url = await minioClient.presignedGetObject(
-        BUCKET_NAME,
+        getBucketName(),
         input.objectName,
         3600
       );

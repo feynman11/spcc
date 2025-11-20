@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { minioClient, BUCKET_NAME } from "@/lib/minio";
+import { minioClient, getBucketName } from "@/lib/minio";
 
 export async function GET(req: NextRequest) {
   try {
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
     // Generate presigned URL (valid for 1 hour)
     const url = await minioClient.presignedGetObject(
-      BUCKET_NAME,
+      getBucketName(),
       objectName,
       3600 // 1 hour
     );
