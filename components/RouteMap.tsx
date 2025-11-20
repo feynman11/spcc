@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { trpc } from "@/lib/trpc/client";
 
 interface GPXData {
   name: string;
@@ -14,7 +15,7 @@ interface GPXData {
 }
 
 interface RouteMapProps {
-  gpxUrl?: string | null;
+  gpxObjectName?: string | null;
   routeName?: string;
   routeDistance?: number;
   routeElevation?: number;
@@ -22,7 +23,7 @@ interface RouteMapProps {
 }
 
 export function RouteMap({
-  gpxUrl,
+  gpxObjectName,
   routeName,
   routeDistance,
   routeElevation,
@@ -31,7 +32,12 @@ export function RouteMap({
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const [gpxData, setGpxData] = useState<GPXData | null>(null);
-  const [loadingGpx, setLoadingGpx] = useState(false);
+
+  // Fetch GPX content from server
+  const { data: gpxContentData, isLoading: loadingGpx } = trpc.routes.getGpxContent.useQuery(
+    { objectName: gpxObjectName || "" },
+    { enabled: !!gpxObjectName }
+  );
 
   // Fix Leaflet default icon issue
   useEffect(() => {
@@ -44,45 +50,34 @@ export function RouteMap({
   }, []);
 
   useEffect(() => {
-    if (gpxUrl) {
-      setLoadingGpx(true);
-      // Fetch and parse the GPX file
-      fetch(gpxUrl)
-        .then((response) => response.text())
-        .then((gpxContent) => {
-          const parser = new DOMParser();
-          const xmlDoc = parser.parseFromString(gpxContent, "text/xml");
+    if (gpxContentData?.content) {
+      // Parse the GPX file content
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(gpxContentData.content, "text/xml");
 
-          const trackPoints = Array.from(xmlDoc.querySelectorAll("trkpt"));
-          const coordinates: [number, number][] = [];
+      const trackPoints = Array.from(xmlDoc.querySelectorAll("trkpt"));
+      const coordinates: [number, number][] = [];
 
-          trackPoints.forEach((point) => {
-            const lat = parseFloat(point.getAttribute("lat") || "0");
-            const lon = parseFloat(point.getAttribute("lon") || "0");
-            if (!isNaN(lat) && !isNaN(lon)) {
-              coordinates.push([lat, lon]);
-            }
-          });
+      trackPoints.forEach((point) => {
+        const lat = parseFloat(point.getAttribute("lat") || "0");
+        const lon = parseFloat(point.getAttribute("lon") || "0");
+        if (!isNaN(lat) && !isNaN(lon)) {
+          coordinates.push([lat, lon]);
+        }
+      });
 
-          if (coordinates.length > 0) {
-            setGpxData({
-              name: routeName || "Route",
-              distance: routeDistance || 0,
-              elevation: routeElevation || 0,
-              coordinates,
-              startPoint: coordinates[0],
-              endPoint: coordinates[coordinates.length - 1],
-            });
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching GPX:", error);
-        })
-        .finally(() => {
-          setLoadingGpx(false);
+      if (coordinates.length > 0) {
+        setGpxData({
+          name: routeName || "Route",
+          distance: routeDistance || 0,
+          elevation: routeElevation || 0,
+          coordinates,
+          startPoint: coordinates[0],
+          endPoint: coordinates[coordinates.length - 1],
         });
+      }
     }
-  }, [gpxUrl, routeName, routeDistance, routeElevation]);
+  }, [gpxContentData, routeName, routeDistance, routeElevation]);
 
   useEffect(() => {
     if (gpxData && mapRef.current && !mapInstanceRef.current) {
@@ -118,7 +113,7 @@ export function RouteMap({
     };
   }, [gpxData]);
 
-  if (!gpxUrl) {
+  if (!gpxObjectName) {
     return (
       <div className={`${height} w-full flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg`}>
         <p>No route map available</p>

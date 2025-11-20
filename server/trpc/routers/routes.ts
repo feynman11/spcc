@@ -209,5 +209,27 @@ export const routesRouter = router({
 
       return { url };
     }),
+
+  getGpxContent: publicProcedure
+    .input(z.object({ objectName: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const { minioClient, getBucketName } = await import("@/lib/minio");
+      
+      // Fetch GPX file content from MinIO server-side
+      const dataStream = await minioClient.getObject(
+        getBucketName(),
+        input.objectName
+      );
+
+      // Convert stream to string
+      const chunks: Buffer[] = [];
+      for await (const chunk of dataStream) {
+        chunks.push(chunk);
+      }
+      const buffer = Buffer.concat(chunks);
+      const content = buffer.toString('utf-8');
+
+      return { content };
+    }),
 });
 

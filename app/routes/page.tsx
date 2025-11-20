@@ -7,6 +7,36 @@ import Link from "next/link";
 import { PaidMemberOverlay } from "@/components/PaidMemberOverlay";
 import { MemberProfileOverlay } from "@/components/MemberProfileOverlay";
 
+function GpxDownloadButton({ objectName }: { objectName: string }) {
+  const utils = trpc.useUtils();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleDownload = async () => {
+    try {
+      setIsLoading(true);
+      const { url } = await utils.routes.getGpxDownloadUrl.fetch({ objectName });
+      window.open(url, '_blank');
+    } catch (error) {
+      toast.error("Failed to get download URL");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <button 
+      onClick={handleDownload}
+      disabled={isLoading}
+      className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+      title="Download GPX"
+    >
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      </svg>
+    </button>
+  );
+}
+
 interface GPXData {
   name: string;
   distance: number;
@@ -645,23 +675,7 @@ export default function Routes() {
                 View Route
               </Link>
               {route.gpxObjectName && (
-                <button 
-                  onClick={async () => {
-                    try {
-                      const response = await fetch(`/api/upload/gpx/url?objectName=${encodeURIComponent(route.gpxObjectName!)}`);
-                      const { url } = await response.json();
-                      window.open(url, '_blank');
-                    } catch (error) {
-                      toast.error("Failed to get download URL");
-                    }
-                  }}
-                  className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
-                  title="Download GPX"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                </button>
+                <GpxDownloadButton objectName={route.gpxObjectName} />
               )}
             </div>
             

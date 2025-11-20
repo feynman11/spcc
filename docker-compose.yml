@@ -13,10 +13,15 @@ services:
       - .env
     environment:
       - NODE_ENV=production
-    depends_on:
-      - db
-      - minio
+      # Connect to existing Docker services using host.docker.internal
+      # This works when db and minio are running in Docker and exposed on host ports
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@host.docker.internal:5432/${POSTGRES_DB:-spcc}?schema=public
+      - MINIO_ENDPOINT=host.docker.internal
     restart: unless-stopped
+    # If your db and minio are in a specific Docker network, uncomment and set the network name:
+    # networks:
+    #   - external-network
+    # Then run: docker network connect <network-name> <app-container-name>
 
   db:
     image: docker.io/postgres:16-alpine
@@ -56,4 +61,10 @@ services:
 volumes:
   postgres-data:
   minio-data:
+
+# Uncomment if you need to connect to an external Docker network:
+# networks:
+#   external-network:
+#     external: true
+#     name: <your-existing-network-name>
 

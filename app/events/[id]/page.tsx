@@ -283,7 +283,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
           </div>
           <div className="p-6">
             <RouteMap
-              gpxUrl={gpxUrlData?.url}
+              gpxObjectName={route?.gpxObjectName}
               routeName={route?.name}
               routeDistance={route?.distance}
               routeElevation={route?.elevation}

@@ -115,7 +115,10 @@ MINIO_SECRET_KEY="minioadmin"
 MINIO_BUCKET_NAME="gpx-files"
 ```
 
-**Note:** When using Podman Compose, use service names (e.g., `db`, `minio`) instead of `localhost` in connection strings.
+**Note:** 
+- When running **all services together** with Podman Compose, you can uncomment the override lines in `docker-compose.yml` to automatically use service names (`db` and `minio`).
+- When connecting to **external Docker services**, you need to use the host's gateway IP or `host.containers.internal` in your `.env` file (see "Database connection issues" section below).
+- For **local development** (not in containers), use `localhost` in your `.env` file.
 
 ## Database Migrations
 
@@ -156,8 +159,41 @@ Podman volumes are stored in `~/.local/share/containers/storage/volumes/` for ro
 - Check logs: `podman-compose logs app` or `podman logs spcc-app`
 
 ### Database connection issues
-- Ensure the `DATABASE_URL` uses the correct hostname (`db` for podman-compose, `localhost` for external)
+
+#### Connecting to External Docker Services
+
+If you have the database and MinIO running in Docker (separate from Podman), you need to configure your `.env` file to access the host:
+
+1. **Find your host's gateway IP** (the IP Podman uses to reach the host):
+   ```bash
+   # Get the default gateway IP
+   ip route show default | awk '/default/ {print $3}'
+   # Or for WSL2, you can use:
+   cat /etc/resolv.conf | grep nameserver | awk '{print $2}'
+   ```
+
+2. **Update your `.env` file** to use the gateway IP or `host.containers.internal`:
+   ```env
+   # Use the gateway IP you found above, or try host.containers.internal
+   DATABASE_URL="postgresql://postgres:password@<GATEWAY_IP>:5432/spcc?schema=public"
+   MINIO_ENDPOINT="<GATEWAY_IP>"
+   # Or try:
+   # DATABASE_URL="postgresql://postgres:password@host.containers.internal:5432/spcc?schema=public"
+   # MINIO_ENDPOINT="host.containers.internal"
+   ```
+
+3. **Alternative: Use host network mode** (if you don't need port isolation):
+   ```bash
+   podman run --network=host -p 3000:3000 --env-file .env spcc
+   ```
+   Then use `localhost` in your `.env` file.
+
+#### Running All Services Together
+
+- **Note:** The `docker-compose.yml` can automatically override `DATABASE_URL` and `MINIO_ENDPOINT` to use service names (`db` and `minio`) when running all services together. Uncomment the override lines in `docker-compose.yml` if you want this behavior.
+- If you're running the app container separately (not with podman-compose), ensure the `DATABASE_URL` uses the correct hostname (`db` for podman-compose, gateway IP for external Docker)
 - Wait for the database to be ready before starting the app (podman-compose handles this with `depends_on`)
+- If you see connection errors with `0.0.0.0`, make sure your `.env` uses the correct hostname (gateway IP or `host.containers.internal` for external services)
 
 ### MinIO connection issues
 - Ensure `MINIO_ENDPOINT` matches the service name (`minio` for podman-compose)
