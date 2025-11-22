@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     try {
       await ensureBucket();
     } catch (error) {
-      console.error("Failed to ensure bucket exists:", error);
+      console.error("[MinIO] Failed to ensure bucket exists:", error);
       // Continue anyway - MinIO might create it automatically
     }
 
@@ -51,16 +51,25 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     // Upload to MinIO
-    await minioClient.putObject(
-      getBucketName(),
-      objectName,
-      buffer,
-      buffer.length,
-      {
-        "Content-Type": file.type || "application/gpx+xml",
-        "Content-Disposition": `attachment; filename="${file.name}"`,
-      }
-    );
+    const bucketName = getBucketName();
+    console.log(`[MinIO] Uploading file to bucket '${bucketName}', object '${objectName}' (${buffer.length} bytes)`);
+    
+    try {
+      await minioClient.putObject(
+        bucketName,
+        objectName,
+        buffer,
+        buffer.length,
+        {
+          "Content-Type": file.type || "application/gpx+xml",
+          "Content-Disposition": `attachment; filename="${file.name}"`,
+        }
+      );
+      console.log(`[MinIO] Successfully uploaded object '${objectName}' to bucket '${bucketName}'`);
+    } catch (error) {
+      console.error(`[MinIO] Failed to upload object '${objectName}' to bucket '${bucketName}':`, error);
+      throw error;
+    }
 
     return NextResponse.json({
       objectName,
@@ -68,7 +77,11 @@ export async function POST(req: NextRequest) {
       size: file.size,
     });
   } catch (error: any) {
-    console.error("Error uploading GPX file:", error);
+    console.error("[MinIO] Error uploading GPX file:", {
+      error: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
     return NextResponse.json(
       { error: error.message || "Failed to upload file" },
       { status: 500 }

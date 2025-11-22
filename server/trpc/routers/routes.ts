@@ -199,37 +199,54 @@ export const routesRouter = router({
     .input(z.object({ objectName: z.string() }))
     .query(async ({ ctx, input }) => {
       const { minioClient, getBucketName } = await import("@/lib/minio");
+      const bucketName = getBucketName();
       
-      // Generate presigned URL (valid for 1 hour)
-      const url = await minioClient.presignedGetObject(
-        getBucketName(),
-        input.objectName,
-        3600
-      );
-
-      return { url };
+      console.log(`[MinIO] Generating presigned URL for object '${input.objectName}' in bucket '${bucketName}'`);
+      
+      try {
+        // Generate presigned URL (valid for 1 hour)
+        const url = await minioClient.presignedGetObject(
+          bucketName,
+          input.objectName,
+          3600
+        );
+        console.log(`[MinIO] Successfully generated presigned URL for object '${input.objectName}'`);
+        return { url };
+      } catch (error) {
+        console.error(`[MinIO] Failed to generate presigned URL for object '${input.objectName}' in bucket '${bucketName}':`, error);
+        throw error;
+      }
     }),
 
   getGpxContent: publicProcedure
     .input(z.object({ objectName: z.string() }))
     .query(async ({ ctx, input }) => {
       const { minioClient, getBucketName } = await import("@/lib/minio");
+      const bucketName = getBucketName();
       
-      // Fetch GPX file content from MinIO server-side
-      const dataStream = await minioClient.getObject(
-        getBucketName(),
-        input.objectName
-      );
+      console.log(`[MinIO] Fetching object '${input.objectName}' from bucket '${bucketName}'`);
+      
+      try {
+        // Fetch GPX file content from MinIO server-side
+        const dataStream = await minioClient.getObject(
+          bucketName,
+          input.objectName
+        );
 
-      // Convert stream to string
-      const chunks: Buffer[] = [];
-      for await (const chunk of dataStream) {
-        chunks.push(chunk);
+        // Convert stream to string
+        const chunks: Buffer[] = [];
+        for await (const chunk of dataStream) {
+          chunks.push(chunk);
+        }
+        const buffer = Buffer.concat(chunks);
+        const content = buffer.toString('utf-8');
+
+        console.log(`[MinIO] Successfully fetched object '${input.objectName}' (${buffer.length} bytes)`);
+        return { content };
+      } catch (error) {
+        console.error(`[MinIO] Failed to fetch object '${input.objectName}' from bucket '${bucketName}':`, error);
+        throw error;
       }
-      const buffer = Buffer.concat(chunks);
-      const content = buffer.toString('utf-8');
-
-      return { content };
     }),
 });
 

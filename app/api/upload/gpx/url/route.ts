@@ -24,15 +24,29 @@ export async function GET(req: NextRequest) {
     }
 
     // Generate presigned URL (valid for 1 hour)
-    const url = await minioClient.presignedGetObject(
-      getBucketName(),
-      objectName,
-      3600 // 1 hour
-    );
+    const bucketName = getBucketName();
+    console.log(`[MinIO] Generating presigned URL for object '${objectName}' in bucket '${bucketName}'`);
+    
+    let url: string;
+    try {
+      url = await minioClient.presignedGetObject(
+        bucketName,
+        objectName,
+        3600 // 1 hour
+      );
+      console.log(`[MinIO] Successfully generated presigned URL for object '${objectName}'`);
+    } catch (error) {
+      console.error(`[MinIO] Failed to generate presigned URL for object '${objectName}' in bucket '${bucketName}':`, error);
+      throw error;
+    }
 
     return NextResponse.json({ url });
   } catch (error: any) {
-    console.error("Error generating presigned URL:", error);
+    console.error("[MinIO] Error generating presigned URL:", {
+      error: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
     return NextResponse.json(
       { error: error.message || "Failed to generate URL" },
       { status: 500 }
