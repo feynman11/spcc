@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { SignOutButton } from "@/components/SignOutButton";
 import { trpc } from "@/lib/trpc/client";
 import Link from "next/link";
@@ -33,52 +33,69 @@ export default function DashboardLayout({
   const activeTab = navigation.find((nav) => pathname?.startsWith(nav.path))?.id || "dashboard";
   const currentIndex = navigation.findIndex((nav) => nav.id === activeTab);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    startX.current = e.touches[0].clientX;
-    startY.current = e.touches[0].clientY;
-    isDragging.current = false;
-  };
+  // Attach non-passive touch event listeners to allow preventDefault
+  useEffect(() => {
+    const element = contentRef.current;
+    if (!element) return;
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!startX.current || !startY.current) return;
+    const handleTouchStartNative = (e: TouchEvent) => {
+      startX.current = e.touches[0].clientX;
+      startY.current = e.touches[0].clientY;
+      isDragging.current = false;
+    };
 
-    const currentX = e.touches[0].clientX;
-    const currentY = e.touches[0].clientY;
+    const handleTouchMoveNative = (e: TouchEvent) => {
+      if (!startX.current || !startY.current) return;
 
-    const diffX = Math.abs(currentX - startX.current);
-    const diffY = Math.abs(currentY - startY.current);
+      const currentX = e.touches[0].clientX;
+      const currentY = e.touches[0].clientY;
 
-    if (diffX > diffY && diffX > 10) {
-      isDragging.current = true;
-      e.preventDefault();
-    }
-  };
+      const diffX = Math.abs(currentX - startX.current);
+      const diffY = Math.abs(currentY - startY.current);
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!isDragging.current || !startX.current) return;
+      if (diffX > diffY && diffX > 10) {
+        isDragging.current = true;
+        e.preventDefault();
+      }
+    };
 
-    const endX = e.changedTouches[0].clientX;
-    const diffX = startX.current - endX;
-    const threshold = 50;
+    const handleTouchEndNative = (e: TouchEvent) => {
+      if (!isDragging.current || !startX.current) return;
 
-    if (Math.abs(diffX) > threshold) {
-      if (diffX > 0) {
-        const nextIndex = Math.min(currentIndex + 1, navigation.length - 1);
-        if (nextIndex !== currentIndex) {
-          router.push(navigation[nextIndex].path);
-        }
-      } else {
-        const prevIndex = Math.max(currentIndex - 1, 0);
-        if (prevIndex !== currentIndex) {
-          router.push(navigation[prevIndex].path);
+      const endX = e.changedTouches[0].clientX;
+      const diffX = startX.current - endX;
+      const threshold = 50;
+
+      if (Math.abs(diffX) > threshold) {
+        if (diffX > 0) {
+          const nextIndex = Math.min(currentIndex + 1, navigation.length - 1);
+          if (nextIndex !== currentIndex) {
+            router.push(navigation[nextIndex].path);
+          }
+        } else {
+          const prevIndex = Math.max(currentIndex - 1, 0);
+          if (prevIndex !== currentIndex) {
+            router.push(navigation[prevIndex].path);
+          }
         }
       }
-    }
 
-    startX.current = 0;
-    startY.current = 0;
-    isDragging.current = false;
-  };
+      startX.current = 0;
+      startY.current = 0;
+      isDragging.current = false;
+    };
+
+    // Attach listeners with { passive: false } to allow preventDefault
+    element.addEventListener("touchstart", handleTouchStartNative, { passive: true });
+    element.addEventListener("touchmove", handleTouchMoveNative, { passive: false });
+    element.addEventListener("touchend", handleTouchEndNative, { passive: true });
+
+    return () => {
+      element.removeEventListener("touchstart", handleTouchStartNative);
+      element.removeEventListener("touchmove", handleTouchMoveNative);
+      element.removeEventListener("touchend", handleTouchEndNative);
+    };
+  }, [currentIndex, router]);
 
   if (status === "loading") {
     return (
@@ -282,9 +299,6 @@ export default function DashboardLayout({
         <main
           ref={contentRef}
           className="flex-1 overflow-y-auto touch-pan-y select-none"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
           style={{ touchAction: "pan-y" }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

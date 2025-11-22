@@ -38,6 +38,7 @@ next-env.d.ts
 
 # Prisma
 # Keep schema.prisma, but ignore generated client
+generated/prisma/
 # Uncomment if you want to ignore migrations:
 # prisma/migrations/
 
