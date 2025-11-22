@@ -28,18 +28,21 @@ function createMinioClient(): Client {
     throw new Error(errorMsg);
   }
 
-  const endpoint = process.env.MINIO_ENDPOINT;
+  // At this point, we know these are defined due to the checks above
+  const endpoint = process.env.MINIO_ENDPOINT!;
+  const accessKey = process.env.MINIO_ACCESS_KEY!;
+  const secretKey = process.env.MINIO_SECRET_KEY!;
   const port = parseInt(process.env.MINIO_PORT || "9000");
   const useSSL = process.env.MINIO_USE_SSL === "true";
-  const bucketName = process.env.MINIO_BUCKET_NAME;
+  const bucketName = process.env.MINIO_BUCKET_NAME!;
 
   console.log("[MinIO] Creating client with configuration:", {
     endpoint,
     port,
     useSSL,
     bucketName,
-    accessKey: process.env.MINIO_ACCESS_KEY ? "***configured***" : "missing",
-    secretKey: process.env.MINIO_SECRET_KEY ? "***configured***" : "missing",
+    accessKey: "***configured***",
+    secretKey: "***configured***",
   });
 
   try {
@@ -47,8 +50,8 @@ function createMinioClient(): Client {
       endPoint: endpoint,
       port,
       useSSL,
-      accessKey: process.env.MINIO_ACCESS_KEY,
-      secretKey: process.env.MINIO_SECRET_KEY,
+      accessKey,
+      secretKey,
     });
 
     console.log("[MinIO] Client created successfully");
