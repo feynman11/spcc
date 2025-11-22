@@ -3,6 +3,7 @@
 import { trpc } from "@/lib/trpc/client";
 import { RouteProtection } from "@/components/RouteProtection";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 function DashboardContent() {
   const router = useRouter();
@@ -185,9 +186,10 @@ function DashboardContent() {
             {upcomingEvents && upcomingEvents.length > 0 ? (
               <div className="space-y-4">
                 {upcomingEvents.slice(0, 5).map((event) => (
-                  <div
+                  <Link
                     key={event.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                    href={`/events/${event.id}`}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
                   >
                     <div className="flex-1">
                       <h4 className="font-semibold text-gray-900 mb-1">
@@ -221,7 +223,7 @@ function DashboardContent() {
                         {event.difficulty}
                       </span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
@@ -261,9 +263,10 @@ function DashboardContent() {
                   .sort((a, b) => b.eventCount - a.eventCount)
                   .slice(0, 5)
                   .map((route) => (
-                    <div
+                    <Link
                       key={route.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                      href={`/routes/${route.id}`}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
                     >
                       <div className="flex-1">
                         <h4 className="font-semibold text-gray-900 mb-1">
@@ -294,7 +297,7 @@ function DashboardContent() {
                           {route.difficulty}
                         </span>
                       </div>
-                    </div>
+                    </Link>
                   ))}
               </div>
             ) : (

@@ -6,10 +6,26 @@ import { useState, useEffect, useMemo } from "react";
 import { RouteMap } from "@/components/RouteMap";
 import { ElevationProfile } from "@/components/ElevationProfile";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function RouteDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [id, setId] = useState<string>("");
+  const [hoveredCoordinate, setHoveredCoordinate] = useState<[number, number] | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    description: "",
+    distance: "",
+    elevation: "",
+    elevationAscent: "",
+    elevationDescent: "",
+    difficulty: "moderate" as "easy" | "moderate" | "hard" | "expert",
+    startLocation: "",
+    endLocation: "",
+    routeType: "road" as "road" | "mountain" | "gravel" | "mixed",
+    tags: [] as string[],
+  });
 
   useEffect(() => {
     params.then((resolvedParams) => {
@@ -17,6 +33,8 @@ export default function RouteDetailPage({ params }: { params: Promise<{ id: stri
     });
   }, [params]);
 
+  const utils = trpc.useUtils();
+  const { data: currentUser } = trpc.members.getCurrentUser.useQuery();
   const { data: route, isLoading: routeLoading } = trpc.routes.getRoute.useQuery(
     {
       routeId: id,
@@ -31,6 +49,67 @@ export default function RouteDetailPage({ params }: { params: Promise<{ id: stri
     { routeId: id },
     { enabled: !!id }
   );
+
+  const deleteRoute = trpc.routes.deleteRoute.useMutation({
+    onSuccess: () => {
+      toast.success("Route deleted successfully");
+      router.push("/routes");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete route");
+    },
+  });
+
+  const updateRoute = trpc.routes.updateRoute.useMutation({
+    onSuccess: () => {
+      toast.success("Route updated successfully");
+      utils.routes.getRoute.invalidate({ routeId: id });
+      setIsEditing(false);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update route");
+    },
+  });
+
+  const canEdit = route && currentUser && (route.uploadedBy === currentUser.id || currentUser.role === "admin");
+  const canDelete = route && currentUser && (route.uploadedBy === currentUser.id || currentUser.role === "admin");
+
+  // Initialize edit form when route loads or editing starts
+  useEffect(() => {
+    if (route && isEditing) {
+      setEditFormData({
+        name: route.name,
+        description: route.description || "",
+        distance: route.distance.toString(),
+        elevation: route.elevation.toString(),
+        elevationAscent: (route.elevationAscent ?? route.elevation).toString(),
+        elevationDescent: (route.elevationDescent ?? 0).toString(),
+        difficulty: route.difficulty,
+        startLocation: route.startLocation,
+        endLocation: route.endLocation || "",
+        routeType: route.routeType,
+        tags: route.tags || [],
+      });
+    }
+  }, [route, isEditing]);
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateRoute.mutate({
+      routeId: id,
+      name: editFormData.name,
+      description: editFormData.description || undefined,
+      distance: parseFloat(editFormData.distance),
+      elevation: parseFloat(editFormData.elevation),
+      elevationAscent: parseFloat(editFormData.elevationAscent),
+      elevationDescent: parseFloat(editFormData.elevationDescent),
+      difficulty: editFormData.difficulty,
+      startLocation: editFormData.startLocation,
+      endLocation: editFormData.endLocation || undefined,
+      routeType: editFormData.routeType,
+      tags: editFormData.tags,
+    });
+  };
 
   // Separate events into upcoming and past
   const { upcomingEvents, pastEvents } = useMemo(() => {
@@ -95,28 +174,217 @@ export default function RouteDetailPage({ params }: { params: Promise<{ id: stri
           </svg>
           Back to Routes
         </button>
-        {gpxUrlData?.url && (
-          <button
-            onClick={() => window.open(gpxUrlData.url, "_blank")}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm flex items-center"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-              />
-            </svg>
-            Download GPX
-          </button>
-        )}
+        <div className="flex gap-2">
+          {canEdit && (
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm flex items-center"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              {isEditing ? "Cancel Edit" : "Edit Route"}
+            </button>
+          )}
+          {canDelete && (
+            <button
+              onClick={() => {
+                if (confirm("Are you sure you want to delete this route? This action cannot be undone.")) {
+                  deleteRoute.mutate({ routeId: id });
+                }
+              }}
+              disabled={deleteRoute.isPending}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+              {deleteRoute.isPending ? "Deleting..." : "Delete Route"}
+            </button>
+          )}
+          {gpxUrlData?.url && (
+            <button
+              onClick={() => window.open(gpxUrlData.url, "_blank")}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm flex items-center"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
+              </svg>
+              Download GPX
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Route Info */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <div className="flex justify-between items-start mb-4">
-          <h1 className="text-3xl font-bold text-gray-900">{route.name}</h1>
+        {isEditing ? (
+          <form onSubmit={handleEditSubmit} className="space-y-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-gray-900">Edit Route</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty *</label>
+                <select
+                  required
+                  value={editFormData.difficulty}
+                  onChange={(e) => setEditFormData({ ...editFormData, difficulty: e.target.value as any })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  <option value="easy">Easy</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="hard">Hard</option>
+                  <option value="expert">Expert</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Distance (km) *</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  required
+                  value={editFormData.distance}
+                  onChange={(e) => setEditFormData({ ...editFormData, distance: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Route Type *</label>
+                <select
+                  required
+                  value={editFormData.routeType}
+                  onChange={(e) => setEditFormData({ ...editFormData, routeType: e.target.value as any })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  <option value="road">Road</option>
+                  <option value="mountain">Mountain</option>
+                  <option value="gravel">Gravel</option>
+                  <option value="mixed">Mixed</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Elevation (m) *</label>
+                <input
+                  type="number"
+                  step="1"
+                  required
+                  value={editFormData.elevation}
+                  onChange={(e) => setEditFormData({ ...editFormData, elevation: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Elevation Ascent (m) *</label>
+                <input
+                  type="number"
+                  step="1"
+                  required
+                  value={editFormData.elevationAscent}
+                  onChange={(e) => setEditFormData({ ...editFormData, elevationAscent: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Elevation Descent (m) *</label>
+                <input
+                  type="number"
+                  step="1"
+                  required
+                  value={editFormData.elevationDescent}
+                  onChange={(e) => setEditFormData({ ...editFormData, elevationDescent: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Start Location *</label>
+                <input
+                  type="text"
+                  required
+                  value={editFormData.startLocation}
+                  onChange={(e) => setEditFormData({ ...editFormData, startLocation: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">End Location</label>
+                <input
+                  type="text"
+                  value={editFormData.endLocation}
+                  onChange={(e) => setEditFormData({ ...editFormData, endLocation: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+              <textarea
+                value={editFormData.description}
+                onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                rows={4}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tags (comma-separated)</label>
+              <input
+                type="text"
+                value={editFormData.tags.join(", ")}
+                onChange={(e) => setEditFormData({ ...editFormData, tags: e.target.value.split(",").map(t => t.trim()).filter(t => t) })}
+                placeholder="e.g., scenic, challenging, popular"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+            </div>
+
+            <div className="flex gap-4 pt-4">
+              <button
+                type="submit"
+                disabled={updateRoute.isPending}
+                className="bg-red-600 text-white px-6 py-3 rounded-xl hover:bg-red-700 transition-colors font-medium disabled:opacity-50"
+              >
+                {updateRoute.isPending ? "Saving..." : "Save Changes"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-200 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <div className="flex justify-between items-start mb-4">
+              <h1 className="text-3xl font-bold text-gray-900">{route.name}</h1>
           <span
             className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
               route.difficulty === "easy"
@@ -195,6 +463,8 @@ export default function RouteDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
         )}
+          </>
+        )}
       </div>
 
       {/* Map */}
@@ -208,6 +478,7 @@ export default function RouteDetailPage({ params }: { params: Promise<{ id: stri
             routeName={route?.name}
             routeDistance={route?.distance}
             routeElevation={route?.elevation}
+            hoveredCoordinate={hoveredCoordinate}
           />
         </div>
       </div>
@@ -218,7 +489,10 @@ export default function RouteDetailPage({ params }: { params: Promise<{ id: stri
           <h3 className="text-lg font-semibold text-gray-900">Elevation Profile</h3>
         </div>
         <div className="p-6">
-          <ElevationProfile gpxObjectName={route?.gpxObjectName} />
+          <ElevationProfile
+            gpxObjectName={route?.gpxObjectName}
+            onHover={(coordinate) => setHoveredCoordinate(coordinate)}
+          />
         </div>
       </div>
 

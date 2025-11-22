@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { auth } from "@/auth";
 import { Toaster } from "sonner";
+import { ConsoleWelcome } from "@/components/ConsoleWelcome";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -25,8 +26,9 @@ export default async function RootLayout({
   const session = await auth();
 
   return (
-    <html lang="en">
-      <body className={inter.variable}>
+    <html lang="en" className="bg-gradient-to-br from-red-50/60 via-red-50/50 to-red-50/60 min-h-screen">
+      <body className={`${inter.variable} min-h-screen`}>
+        <ConsoleWelcome />
         <Providers session={session}>
           {children}
           <Toaster />

@@ -205,6 +205,77 @@ export const routesRouter = router({
       return route.id;
     }),
 
+  updateRoute: protectedProcedure
+    .input(
+      z.object({
+        routeId: z.string(),
+        name: z.string().optional(),
+        description: z.string().optional(),
+        distance: z.number().optional(),
+        elevation: z.number().optional(),
+        elevationAscent: z.number().optional(),
+        elevationDescent: z.number().optional(),
+        difficulty: difficultyEnum.optional(),
+        startLocation: z.string().optional(),
+        endLocation: z.string().optional(),
+        routeType: routeTypeEnum.optional(),
+        tags: z.array(z.string()).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User ID not found in session",
+        });
+      }
+
+      // Get the route to check ownership
+      const route = await ctx.prisma.route.findUnique({
+        where: { id: input.routeId },
+      });
+
+      if (!route) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Route not found",
+        });
+      }
+
+      // Check if user is the creator or an admin
+      const isCreator = route.uploadedBy === ctx.userId;
+      const isAdmin = ctx.userRole === "admin";
+
+      if (!isCreator && !isAdmin) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only edit routes you created, or you must be an admin",
+        });
+      }
+
+      // Build update data object with only provided fields
+      const updateData: any = {};
+      if (input.name !== undefined) updateData.name = input.name;
+      if (input.description !== undefined) updateData.description = input.description;
+      if (input.distance !== undefined) updateData.distance = input.distance;
+      if (input.elevation !== undefined) updateData.elevation = input.elevation;
+      if (input.elevationAscent !== undefined) updateData.elevationAscent = input.elevationAscent;
+      if (input.elevationDescent !== undefined) updateData.elevationDescent = input.elevationDescent;
+      if (input.difficulty !== undefined) updateData.difficulty = input.difficulty;
+      if (input.startLocation !== undefined) updateData.startLocation = input.startLocation;
+      if (input.endLocation !== undefined) updateData.endLocation = input.endLocation;
+      if (input.routeType !== undefined) updateData.routeType = input.routeType;
+      if (input.tags !== undefined) updateData.tags = input.tags;
+
+      // Update the route
+      const updatedRoute = await ctx.prisma.route.update({
+        where: { id: input.routeId },
+        data: updateData,
+      });
+
+      return updatedRoute.id;
+    }),
+
   getGpxDownloadUrl: publicProcedure
     .input(z.object({ objectName: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -257,6 +328,62 @@ export const routesRouter = router({
         console.error(`[MinIO] Failed to fetch object '${input.objectName}' from bucket '${bucketName}':`, error);
         throw error;
       }
+    }),
+
+  deleteRoute: protectedProcedure
+    .input(z.object({ routeId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User ID not found in session",
+        });
+      }
+
+      // Get the route to check ownership
+      const route = await ctx.prisma.route.findUnique({
+        where: { id: input.routeId },
+      });
+
+      if (!route) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Route not found",
+        });
+      }
+
+      // Check if user is the creator or an admin
+      const isCreator = route.uploadedBy === ctx.userId;
+      const isAdmin = ctx.userRole === "admin";
+
+      if (!isCreator && !isAdmin) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only delete routes you created, or you must be an admin",
+        });
+      }
+
+      // Delete GPX file from MinIO if it exists
+      if (route.gpxFileUrl) {
+        try {
+          const { minioClient, getBucketName } = await import("@/lib/minio");
+          const bucketName = getBucketName();
+          
+          console.log(`[MinIO] Deleting object '${route.gpxFileUrl}' from bucket '${bucketName}'`);
+          await minioClient.removeObject(bucketName, route.gpxFileUrl);
+          console.log(`[MinIO] Successfully deleted object '${route.gpxFileUrl}'`);
+        } catch (error) {
+          // Log error but don't fail the deletion if MinIO deletion fails
+          console.error(`[MinIO] Failed to delete object '${route.gpxFileUrl}':`, error);
+        }
+      }
+
+      // Delete the route (cascade will handle related events)
+      await ctx.prisma.route.delete({
+        where: { id: input.routeId },
+      });
+
+      return { success: true };
     }),
 });
 

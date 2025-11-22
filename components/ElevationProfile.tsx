@@ -6,18 +6,23 @@ import { trpc } from "@/lib/trpc/client";
 interface ElevationProfileProps {
   gpxObjectName?: string | null;
   height?: string;
+  onHover?: (coordinate: [number, number] | null, distance: number, elevation: number) => void;
 }
 
 interface ElevationPoint {
   distance: number; // in km
   elevation: number; // in meters
+  coordinate: [number, number]; // lat, lon
 }
 
 export function ElevationProfile({
   gpxObjectName,
   height = "h-64",
+  onHover,
 }: ElevationProfileProps) {
   const [elevationData, setElevationData] = useState<ElevationPoint[]>([]);
+  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+  const [gradient, setGradient] = useState<number | null>(null);
   const { data: gpxContentData, isLoading: loadingGpx } = trpc.routes.getGpxContent.useQuery(
     { objectName: gpxObjectName || "" },
     { enabled: !!gpxObjectName }
@@ -71,6 +76,7 @@ export function ElevationProfile({
           profile.push({
             distance: cumulativeDistance,
             elevation: elevation,
+            coordinate: [lat, lon],
           });
 
           prevLat = lat;
@@ -123,6 +129,69 @@ export function ElevationProfile({
     padding.top +
     (chartHeight - padding.top - padding.bottom) *
       (1 - (elevation - minElevation) / elevationRange);
+
+  // Calculate gradient using previous 3 and next 3 elevations
+  const calculateGradient = (index: number): number | null => {
+    if (index < 0 || index >= elevationData.length) return null;
+
+    const lookBack = 3;
+    const lookForward = 3;
+    const startIndex = Math.max(0, index - lookBack);
+    const endIndex = Math.min(elevationData.length - 1, index + lookForward);
+
+    if (startIndex >= endIndex) return null;
+
+    const startPoint = elevationData[startIndex];
+    const endPoint = elevationData[endIndex];
+    const distanceDiff = endPoint.distance - startPoint.distance;
+    const elevationDiff = endPoint.elevation - startPoint.elevation;
+
+    if (distanceDiff === 0) return null;
+
+    // Gradient as percentage (elevation change in meters per 100 meters of horizontal distance)
+    // Convert distance from km to meters
+    const gradientPercent = (elevationDiff / (distanceDiff * 1000)) * 100;
+    return gradientPercent;
+  };
+
+  // Handle mouse move to find closest point
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!elevationData.length) return;
+
+    const svg = e.currentTarget;
+    const rect = svg.getBoundingClientRect();
+    // Calculate mouse position in SVG coordinates accounting for viewBox
+    const x = ((e.clientX - rect.left) / rect.width) * chartWidth;
+
+    // Find the closest point by distance
+    let closestIndex = 0;
+    let minDistance = Math.abs(x - xScale(elevationData[0].distance));
+
+    for (let i = 1; i < elevationData.length; i++) {
+      const distance = Math.abs(x - xScale(elevationData[i].distance));
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIndex = i;
+      }
+    }
+
+    const point = elevationData[closestIndex];
+    setHoveredPoint(closestIndex);
+    const calculatedGradient = calculateGradient(closestIndex);
+    setGradient(calculatedGradient);
+    
+    if (onHover) {
+      onHover(point.coordinate, point.distance, point.elevation);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredPoint(null);
+    setGradient(null);
+    if (onHover) {
+      onHover(null, 0, 0);
+    }
+  };
 
   // Generate path for elevation profile
   const pathData = elevationData
@@ -205,6 +274,8 @@ export function ElevationProfile({
         className="w-full"
         preserveAspectRatio="none"
         style={{ minHeight: "200px" }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
       >
         {/* Grid lines */}
         {gridLines}
@@ -223,6 +294,45 @@ export function ElevationProfile({
           stroke="#ef4444"
           strokeWidth={2}
         />
+
+        {/* Hover indicator dot */}
+        {hoveredPoint !== null && elevationData[hoveredPoint] && (
+          <>
+            <circle
+              cx={xScale(elevationData[hoveredPoint].distance)}
+              cy={yScale(elevationData[hoveredPoint].elevation)}
+              r={5}
+              fill="#ef4444"
+              stroke="white"
+              strokeWidth={2}
+              style={{ pointerEvents: "none" }}
+            />
+            {/* Gradient label */}
+            {gradient !== null && (
+              <g style={{ pointerEvents: "none" }}>
+                <rect
+                  x={xScale(elevationData[hoveredPoint].distance) - 35}
+                  y={yScale(elevationData[hoveredPoint].elevation) - 35}
+                  width={70}
+                  height={20}
+                  fill="rgba(0, 0, 0, 0.7)"
+                  rx={4}
+                />
+                <text
+                  x={xScale(elevationData[hoveredPoint].distance)}
+                  y={yScale(elevationData[hoveredPoint].elevation) - 20}
+                  textAnchor="middle"
+                  fontSize="11"
+                  fill="white"
+                  fontWeight="500"
+                >
+                  {gradient > 0 ? "+" : ""}
+                  {gradient.toFixed(1)}%
+                </text>
+              </g>
+            )}
+          </>
+        )}
 
         {/* Gradient definition */}
         <defs>

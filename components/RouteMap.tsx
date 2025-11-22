@@ -20,6 +20,7 @@ interface RouteMapProps {
   routeDistance?: number;
   routeElevation?: number;
   height?: string;
+  hoveredCoordinate?: [number, number] | null;
 }
 
 export function RouteMap({
@@ -28,9 +29,11 @@ export function RouteMap({
   routeDistance,
   routeElevation,
   height = "h-96",
+  hoveredCoordinate,
 }: RouteMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const hoverMarkerRef = useRef<L.Marker | null>(null);
   const [gpxData, setGpxData] = useState<GPXData | null>(null);
 
   // Fetch GPX content from server
@@ -110,8 +113,37 @@ export function RouteMap({
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
+      if (hoverMarkerRef.current) {
+        hoverMarkerRef.current.remove();
+        hoverMarkerRef.current = null;
+      }
     };
   }, [gpxData]);
+
+  // Update hover marker when coordinate changes
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+
+    // Remove existing hover marker
+    if (hoverMarkerRef.current) {
+      hoverMarkerRef.current.remove();
+      hoverMarkerRef.current = null;
+    }
+
+    // Add new hover marker if coordinate is provided
+    if (hoveredCoordinate) {
+      const marker = L.marker(hoveredCoordinate, {
+        icon: L.divIcon({
+          className: "hover-marker",
+          html: '<div style="width: 12px; height: 12px; background-color: #ef4444; border: 2px solid white; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+          iconSize: [12, 12],
+          iconAnchor: [6, 6],
+        }),
+      }).addTo(mapInstanceRef.current);
+
+      hoverMarkerRef.current = marker;
+    }
+  }, [hoveredCoordinate]);
 
   if (!gpxObjectName) {
     return (
@@ -122,12 +154,12 @@ export function RouteMap({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full" style={{ position: 'relative', zIndex: 1 }}>
       {loadingGpx && (
         <div className="mb-2 text-sm text-gray-500">Loading route data...</div>
       )}
       {gpxData ? (
-        <div ref={mapRef} className={`${height} w-full rounded-lg`} />
+        <div ref={mapRef} className={`${height} w-full rounded-lg`} style={{ position: 'relative', zIndex: 1 }} />
       ) : (
         <div className={`${height} w-full flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg`}>
           {loadingGpx ? (

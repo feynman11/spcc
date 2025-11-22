@@ -271,6 +271,8 @@ export const eventsRouter = router({
         difficulty: difficultyEnum,
         eventType: eventTypeEnum,
         stravaEventUrl: z.string().optional(),
+        repeatInterval: z.union([z.literal(1), z.literal(2), z.literal(4), z.literal(8)]).optional(),
+        numberOfRecurrences: z.number().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -293,23 +295,39 @@ export const eventsRouter = router({
         });
       }
 
-      const event = await ctx.prisma.event.create({
-        data: {
-          title: input.title,
-          description: input.description,
-          date: new Date(input.date),
-          startTime: input.startTime,
-          duration: input.duration,
-          routeId: input.routeId,
-          meetingPoint: input.meetingPoint,
-          maxParticipants: input.maxParticipants,
-          difficulty: input.difficulty,
-          eventType: input.eventType,
-          stravaEventUrl: input.stravaEventUrl,
-          organizer: ctx.userId,
-          status: "scheduled",
-        },
-      });
+      // Determine if we need to create recurring events
+      const shouldRepeat = input.repeatInterval && input.numberOfRecurrences && input.numberOfRecurrences > 1;
+      const repeatIntervalWeeks = shouldRepeat ? input.repeatInterval! : 0;
+      const numberOfEvents = shouldRepeat ? input.numberOfRecurrences! : 1;
+
+      const baseDate = new Date(input.date);
+      const createdEventIds: string[] = [];
+
+      // Create all events (single or recurring)
+      for (let i = 0; i < numberOfEvents; i++) {
+        const eventDate = new Date(baseDate);
+        eventDate.setDate(eventDate.getDate() + (i * repeatIntervalWeeks * 7));
+
+        const event = await ctx.prisma.event.create({
+          data: {
+            title: input.title,
+            description: input.description,
+            date: eventDate,
+            startTime: input.startTime,
+            duration: input.duration,
+            routeId: input.routeId,
+            meetingPoint: input.meetingPoint,
+            maxParticipants: input.maxParticipants,
+            difficulty: input.difficulty,
+            eventType: input.eventType,
+            stravaEventUrl: input.stravaEventUrl,
+            organizer: ctx.userId,
+            status: "scheduled",
+          },
+        });
+
+        createdEventIds.push(event.id);
+      }
 
       // Increment route event count if route is selected
       if (input.routeId) {
@@ -317,13 +335,124 @@ export const eventsRouter = router({
           where: { id: input.routeId },
           data: {
             eventCount: {
-              increment: 1,
+              increment: numberOfEvents,
             },
           },
         });
       }
 
-      return event.id;
+      return shouldRepeat 
+        ? { eventIds: createdEventIds, count: numberOfEvents }
+        : createdEventIds[0];
+    }),
+
+  updateEvent: protectedProcedure
+    .input(
+      z.object({
+        eventId: z.string(),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        date: z.number().optional(),
+        startTime: z.string().optional(),
+        duration: z.number().optional(),
+        routeId: z.string().nullable().optional(),
+        meetingPoint: z.string().optional(),
+        maxParticipants: z.number().nullable().optional(),
+        difficulty: difficultyEnum.optional(),
+        eventType: eventTypeEnum.optional(),
+        stravaEventUrl: z.string().nullable().optional(),
+        status: eventStatusEnum.optional(),
+        weatherConditions: z.string().nullable().optional(),
+        notes: z.string().nullable().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User ID not found in session",
+        });
+      }
+
+      // Get the event to check ownership
+      const event = await ctx.prisma.event.findUnique({
+        where: { id: input.eventId },
+        include: {
+          route: true,
+        },
+      });
+
+      if (!event) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Event not found",
+        });
+      }
+
+      // Check if user is the organizer or an admin
+      const isOrganizer = event.organizer === ctx.userId;
+      const isAdmin = ctx.userRole === "admin";
+
+      if (!isOrganizer && !isAdmin) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only edit events you organized, or you must be an admin",
+        });
+      }
+
+      // Handle route change - update event counts
+      const oldRouteId = event.routeId;
+      const newRouteId = input.routeId !== undefined ? input.routeId : oldRouteId;
+
+      if (oldRouteId !== newRouteId) {
+        // Decrement old route event count
+        if (oldRouteId) {
+          await ctx.prisma.route.update({
+            where: { id: oldRouteId },
+            data: {
+              eventCount: {
+                decrement: 1,
+              },
+            },
+          });
+        }
+        // Increment new route event count
+        if (newRouteId) {
+          await ctx.prisma.route.update({
+            where: { id: newRouteId },
+            data: {
+              eventCount: {
+                increment: 1,
+              },
+            },
+          });
+        }
+      }
+
+      // Build update data object with only provided fields
+      const updateData: any = {};
+      if (input.title !== undefined) updateData.title = input.title;
+      if (input.description !== undefined) updateData.description = input.description;
+      if (input.date !== undefined) updateData.date = new Date(input.date);
+      if (input.startTime !== undefined) updateData.startTime = input.startTime;
+      if (input.duration !== undefined) updateData.duration = input.duration;
+      if (input.routeId !== undefined) updateData.routeId = input.routeId;
+      if (input.meetingPoint !== undefined) updateData.meetingPoint = input.meetingPoint;
+      if (input.maxParticipants !== undefined) updateData.maxParticipants = input.maxParticipants;
+      if (input.difficulty !== undefined) updateData.difficulty = input.difficulty;
+      if (input.eventType !== undefined) updateData.eventType = input.eventType;
+      if (input.stravaEventUrl !== undefined) updateData.stravaEventUrl = input.stravaEventUrl;
+      if (input.status !== undefined) updateData.status = input.status;
+      if (input.weatherConditions !== undefined) updateData.weatherConditions = input.weatherConditions;
+      if (input.notes !== undefined) updateData.notes = input.notes;
+
+      // Update the event
+      const updatedEvent = await ctx.prisma.event.update({
+        where: { id: input.eventId },
+        data: updateData,
+      });
+
+      return updatedEvent.id;
     }),
 
   joinEvent: memberProcedure
@@ -462,6 +591,107 @@ export const eventsRouter = router({
       });
 
       return input.eventId;
+    }),
+
+  deleteEvent: protectedProcedure
+    .input(z.object({ 
+      eventId: z.string(),
+      deleteFutureEvents: z.boolean().optional().default(false),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User ID not found in session",
+        });
+      }
+
+      // Get the event to check ownership
+      const event = await ctx.prisma.event.findUnique({
+        where: { id: input.eventId },
+        include: {
+          route: true,
+        },
+      });
+
+      if (!event) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Event not found",
+        });
+      }
+
+      // Check if user is the organizer or an admin
+      const isOrganizer = event.organizer === ctx.userId;
+      const isAdmin = ctx.userRole === "admin";
+
+      if (!isOrganizer && !isAdmin) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only delete events you organized, or you must be an admin",
+        });
+      }
+
+      let eventsToDelete = [event];
+      let routeIdsToUpdate = new Set<string>();
+
+      // If deleteFutureEvents is true, find all related recurring events
+      if (input.deleteFutureEvents) {
+        const relatedEvents = await ctx.prisma.event.findMany({
+          where: {
+            title: event.title,
+            organizer: event.organizer,
+            startTime: event.startTime,
+            meetingPoint: event.meetingPoint,
+            routeId: event.routeId,
+            date: {
+              gt: event.date,
+            },
+            status: {
+              not: "cancelled", // Don't delete already cancelled events
+            },
+          },
+          include: {
+            route: true,
+          },
+        });
+
+        eventsToDelete = [event, ...relatedEvents];
+      }
+
+      // Collect route IDs that need event count updates
+      eventsToDelete.forEach((e) => {
+        if (e.routeId) {
+          routeIdsToUpdate.add(e.routeId);
+        }
+      });
+
+      // Delete all events
+      const eventIds = eventsToDelete.map((e) => e.id);
+      await ctx.prisma.event.deleteMany({
+        where: {
+          id: {
+            in: eventIds,
+          },
+        },
+      });
+
+      // Decrement route event counts
+      for (const routeId of routeIdsToUpdate) {
+        await ctx.prisma.route.update({
+          where: { id: routeId },
+          data: {
+            eventCount: {
+              decrement: eventsToDelete.filter((e) => e.routeId === routeId).length,
+            },
+          },
+        });
+      }
+
+      return { 
+        success: true, 
+        deletedCount: eventsToDelete.length,
+      };
     }),
 });
 

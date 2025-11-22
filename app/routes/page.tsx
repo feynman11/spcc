@@ -88,6 +88,16 @@ export default function Routes() {
       toast.error(error.message || "Failed to create route");
     },
   });
+
+  const deleteRoute = trpc.routes.deleteRoute.useMutation({
+    onSuccess: () => {
+      toast.success("Route deleted successfully");
+      utils.routes.getAllRoutes.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete route");
+    },
+  });
   
   const [showForm, setShowForm] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -95,6 +105,7 @@ export default function Routes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDifficulty, setFilterDifficulty] = useState("");
   const [filterType, setFilterType] = useState("");
+  const [filterTags, setFilterTags] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
@@ -330,14 +341,24 @@ export default function Routes() {
 
   // Filter routes
   const routesArray = Array.isArray(allRoutes) ? allRoutes : [];
+  
+  // Get all unique tags from routes
+  const allTags = Array.from(
+    new Set(
+      routesArray.flatMap(route => route.tags || [])
+    )
+  ).sort();
+  
   const filteredRoutes = routesArray.filter(route => {
     const matchesSearch = route.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          route.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          route.startLocation.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDifficulty = !filterDifficulty || route.difficulty === filterDifficulty;
     const matchesType = !filterType || route.routeType === filterType;
+    const matchesTags = filterTags.length === 0 || 
+                       (route.tags && route.tags.some(tag => filterTags.includes(tag)));
     
-    return matchesSearch && matchesDifficulty && matchesType;
+    return matchesSearch && matchesDifficulty && matchesType && matchesTags;
   });
 
   const content = (
@@ -573,7 +594,7 @@ export default function Routes() {
 
       {/* Filters */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
             <input
@@ -618,6 +639,7 @@ export default function Routes() {
                 setSearchTerm("");
                 setFilterDifficulty("");
                 setFilterType("");
+                setFilterTags([]);
               }}
               className="w-full px-4 py-2 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
@@ -625,6 +647,40 @@ export default function Routes() {
             </button>
           </div>
         </div>
+        
+        {/* Tags Filter */}
+        {allTags.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+            <div className="flex flex-wrap gap-2">
+              {allTags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => {
+                    setFilterTags(prev => 
+                      prev.includes(tag) 
+                        ? prev.filter(t => t !== tag)
+                        : [...prev, tag]
+                    );
+                  }}
+                  className={`inline-flex items-center px-3 py-1.5 text-sm rounded-full transition-colors ${
+                    filterTags.includes(tag)
+                      ? "bg-red-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {tag}
+                  {filterTags.includes(tag) && (
+                    <svg className="w-3 h-3 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Routes Grid */}
@@ -707,6 +763,28 @@ export default function Routes() {
               </Link>
               {route.gpxObjectName && (
                 <GpxDownloadButton objectName={route.gpxObjectName} />
+              )}
+              {currentUser && (route.uploadedBy === currentUser.id || currentUser.role === "admin") && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (confirm("Are you sure you want to delete this route? This action cannot be undone.")) {
+                      deleteRoute.mutate({ routeId: route.id });
+                    }
+                  }}
+                  disabled={deleteRoute.isPending}
+                  className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Delete Route"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
               )}
             </div>
             

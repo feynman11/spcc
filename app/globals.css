@@ -53,6 +53,11 @@
   @apply text-slate-600;
 }
 
+html {
+  min-height: 100%;
+  background: linear-gradient(to bottom right, rgba(254, 242, 242, 0.6), rgba(254, 242, 242, 0.5), rgba(254, 242, 242, 0.6));
+}
+
 body {
   font-family:
     "Inter Variable",
@@ -71,7 +76,7 @@ body {
     "Segoe UI Symbol",
     "Noto Color Emoji";
   color: var(--color-dark);
-  background: var(--color-light);
+  min-height: 100%;
 }
 
 /* only use this to update the style of the auth input fields. use a different class for all other input fields */
@@ -94,5 +99,23 @@ body {
 
 .auth-button:hover:not(:disabled) {
   background-color: var(--color-primary-hover);
+}
+
+/* Ensure Leaflet map elements and sidebar stay behind modal dialogs */
+body.modal-open .leaflet-container,
+body.modal-open .leaflet-pane,
+body.modal-open .leaflet-map-pane,
+body.modal-open .leaflet-tile-pane,
+body.modal-open .leaflet-overlay-pane,
+body.modal-open .leaflet-shadow-pane,
+body.modal-open .leaflet-marker-pane,
+body.modal-open .leaflet-tooltip-pane,
+body.modal-open .leaflet-popup-pane,
+body.modal-open .leaflet-control-container {
+  z-index: 1 !important;
+}
+
+body.modal-open [class*="z-50"]:not([class*="z-[1"]):not([class*="z-[11"]) {
+  z-index: 1 !important;
 }
 

@@ -40,7 +40,7 @@ export default function SignInPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50">
+    <main className="min-h-screen flex items-center justify-center">
       <div className="max-w-md w-full mx-4">
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">

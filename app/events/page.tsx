@@ -7,6 +7,7 @@ import Link from "next/link";
 import { PaidMemberOverlay } from "@/components/PaidMemberOverlay";
 import { MemberProfileOverlay } from "@/components/MemberProfileOverlay";
 import { useEventJoinLeave } from "@/hooks/useEventJoinLeave";
+import { DeleteEventDialog } from "@/components/DeleteEventDialog";
 
 export default function Events() {
   const utils = trpc.useUtils();
@@ -22,8 +23,13 @@ export default function Events() {
   const showMemberProfileOverlay = !memberLoading && currentMember === null;
   
   const createEvent = trpc.events.createEvent.useMutation({
-    onSuccess: () => {
-      toast.success("Event created successfully!");
+    onSuccess: (result) => {
+      const eventCount = typeof result === "object" && "count" in result ? result.count : 1;
+      if (eventCount > 1) {
+        toast.success(`${eventCount} events created successfully!`);
+      } else {
+        toast.success("Event created successfully!");
+      }
       utils.events.getAllEvents.invalidate();
       utils.events.getUpcomingEvents.invalidate();
       setShowForm(false);
@@ -39,6 +45,9 @@ export default function Events() {
         difficulty: "moderate",
         eventType: "group_ride",
         stravaEventUrl: "",
+        repeatEnabled: false,
+        repeatInterval: "1",
+        numberOfRecurrences: "1",
       });
     },
     onError: (error) => {
@@ -47,6 +56,29 @@ export default function Events() {
   });
   
   const { joinEvent, leaveEvent } = useEventJoinLeave();
+  
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<{ id: string; title: string; date: number } | null>(null);
+
+  const deleteEvent = trpc.events.deleteEvent.useMutation({
+    onSuccess: (result) => {
+      const deletedCount = result.deletedCount || 1;
+      if (deletedCount > 1) {
+        toast.success(`${deletedCount} events deleted successfully`);
+      } else {
+        toast.success("Event deleted successfully");
+      }
+      utils.events.getAllEvents.invalidate();
+      utils.events.getUpcomingEvents.invalidate();
+      setDeleteDialogOpen(false);
+      setEventToDelete(null);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete event");
+      setDeleteDialogOpen(false);
+      setEventToDelete(null);
+    },
+  });
   
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -61,6 +93,9 @@ export default function Events() {
     difficulty: "moderate" as "easy" | "moderate" | "hard" | "expert",
     eventType: "group_ride" as "group_ride" | "training" | "race" | "social",
     stravaEventUrl: "",
+    repeatEnabled: false,
+    repeatInterval: "1" as "1" | "2" | "4" | "8",
+    numberOfRecurrences: "1",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,6 +113,8 @@ export default function Events() {
       difficulty: formData.difficulty,
       eventType: formData.eventType,
       stravaEventUrl: formData.stravaEventUrl || undefined,
+      repeatInterval: formData.repeatEnabled ? parseInt(formData.repeatInterval) as 1 | 2 | 4 | 8 : undefined,
+      numberOfRecurrences: formData.repeatEnabled ? parseInt(formData.numberOfRecurrences) : undefined,
     });
   };
 
@@ -274,6 +311,59 @@ export default function Events() {
               />
             </div>
 
+            {/* Repeat Options */}
+            <div className="border-t border-gray-200 pt-6">
+              <div className="flex items-center gap-3 mb-4">
+                <input
+                  type="checkbox"
+                  id="repeatEnabled"
+                  checked={formData.repeatEnabled}
+                  onChange={(e) => setFormData({ ...formData, repeatEnabled: e.target.checked })}
+                  className="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                />
+                <label htmlFor="repeatEnabled" className="text-sm font-medium text-gray-700">
+                  Repeat this event
+                </label>
+              </div>
+              
+              {formData.repeatEnabled && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ml-8">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Repeat every (weeks) *
+                    </label>
+                    <select
+                      required={formData.repeatEnabled}
+                      value={formData.repeatInterval}
+                      onChange={(e) => setFormData({ ...formData, repeatInterval: e.target.value as "1" | "2" | "4" | "8" })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    >
+                      <option value="1">1 week</option>
+                      <option value="2">2 weeks</option>
+                      <option value="4">4 weeks</option>
+                      <option value="8">8 weeks</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Number of recurrences *
+                    </label>
+                    <input
+                      type="number"
+                      required={formData.repeatEnabled}
+                      min="1"
+                      max="52"
+                      value={formData.numberOfRecurrences}
+                      onChange={(e) => setFormData({ ...formData, numberOfRecurrences: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      placeholder="e.g., 5"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Total events including the first one</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"
@@ -378,6 +468,26 @@ export default function Events() {
                       )}
                     </>
                   )}
+                  {currentUser && (event.organizer === currentUser.id || currentUser.role === "admin") && (
+                    <button
+                      onClick={() => {
+                        setEventToDelete({ id: event.id, title: event.title, date: event.date });
+                        setDeleteDialogOpen(true);
+                      }}
+                      disabled={deleteEvent.isPending}
+                      className="w-full bg-red-600 text-white px-4 py-3 rounded-xl hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                      {deleteEvent.isPending ? "Deleting..." : "Delete Event"}
+                    </button>
+                  )}
                   {event.stravaEventUrl && (
                     <a
                       href={event.stravaEventUrl}
@@ -465,12 +575,34 @@ export default function Events() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <Link
-                            href={`/events/${event.id}`}
-                            className="text-blue-600 hover:text-blue-700 font-medium"
-                          >
-                            View
-                          </Link>
+                          <div className="flex items-center gap-3">
+                            <Link
+                              href={`/events/${event.id}`}
+                              className="text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                              View
+                            </Link>
+                            {currentUser && (event.organizer === currentUser.id || currentUser.role === "admin") && (
+                              <button
+                                onClick={() => {
+                                  setEventToDelete({ id: event.id, title: event.title, date: event.date });
+                                  setDeleteDialogOpen(true);
+                                }}
+                                disabled={deleteEvent.isPending}
+                                className="text-red-600 hover:text-red-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
+                                </svg>
+                                {deleteEvent.isPending ? "Deleting..." : "Delete"}
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -481,6 +613,26 @@ export default function Events() {
           </div>
         )}
       </div>
+
+      {/* Delete Event Dialog */}
+      {eventToDelete && (
+        <DeleteEventDialog
+          isOpen={deleteDialogOpen}
+          onClose={() => {
+            setDeleteDialogOpen(false);
+            setEventToDelete(null);
+          }}
+          onConfirm={(deleteFutureEvents) => {
+            deleteEvent.mutate({
+              eventId: eventToDelete.id,
+              deleteFutureEvents,
+            });
+          }}
+          eventTitle={eventToDelete.title}
+          eventDate={new Date(eventToDelete.date)}
+          isPending={deleteEvent.isPending}
+        />
+      )}
     </div>
   );
 

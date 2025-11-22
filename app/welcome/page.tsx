@@ -33,7 +33,7 @@ export default function WelcomePage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50">
+    <main className="min-h-screen flex items-center justify-center">
       <div className="max-w-md w-full mx-4">
         <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
           {/* Logo */}

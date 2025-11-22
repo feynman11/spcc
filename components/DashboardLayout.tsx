@@ -94,7 +94,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -112,11 +112,11 @@ export default function DashboardLayout({
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center px-6 py-6 border-b border-gray-100">
-            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
               <img
                 src="/spcc_logo.jpg"
                 alt="South Peaks Cycle Club Logo"
-                className="w-8 h-8"
+                className="w-full h-full object-cover"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                   const svg = e.currentTarget.nextElementSibling as HTMLElement;
@@ -124,7 +124,7 @@ export default function DashboardLayout({
                 }}
               />
               <svg
-                className="w-6 h-6 text-red-600 hidden"
+                className="w-full h-full text-red-600 hidden"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -201,7 +201,7 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="bg-white shadow-sm border-b border-gray-100">
+        <header className="bg-white shadow-sm border-b border-gray-100 lg:hidden">
           <div className="flex items-center justify-between px-4 py-4">
             <button
               onClick={() => setSidebarOpen(true)}
