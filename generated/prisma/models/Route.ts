@@ -29,12 +29,16 @@ export type AggregateRoute = {
 export type RouteAvgAggregateOutputType = {
   distance: number | null
   elevation: number | null
+  elevationAscent: number | null
+  elevationDescent: number | null
   eventCount: number | null
 }
 
 export type RouteSumAggregateOutputType = {
   distance: number | null
   elevation: number | null
+  elevationAscent: number | null
+  elevationDescent: number | null
   eventCount: number | null
 }
 
@@ -44,6 +48,8 @@ export type RouteMinAggregateOutputType = {
   description: string | null
   distance: number | null
   elevation: number | null
+  elevationAscent: number | null
+  elevationDescent: number | null
   difficulty: $Enums.Difficulty | null
   gpxFileUrl: string | null
   gpxFileName: string | null
@@ -63,6 +69,8 @@ export type RouteMaxAggregateOutputType = {
   description: string | null
   distance: number | null
   elevation: number | null
+  elevationAscent: number | null
+  elevationDescent: number | null
   difficulty: $Enums.Difficulty | null
   gpxFileUrl: string | null
   gpxFileName: string | null
@@ -82,6 +90,8 @@ export type RouteCountAggregateOutputType = {
   description: number
   distance: number
   elevation: number
+  elevationAscent: number
+  elevationDescent: number
   difficulty: number
   gpxFileUrl: number
   gpxFileName: number
@@ -101,12 +111,16 @@ export type RouteCountAggregateOutputType = {
 export type RouteAvgAggregateInputType = {
   distance?: true
   elevation?: true
+  elevationAscent?: true
+  elevationDescent?: true
   eventCount?: true
 }
 
 export type RouteSumAggregateInputType = {
   distance?: true
   elevation?: true
+  elevationAscent?: true
+  elevationDescent?: true
   eventCount?: true
 }
 
@@ -116,6 +130,8 @@ export type RouteMinAggregateInputType = {
   description?: true
   distance?: true
   elevation?: true
+  elevationAscent?: true
+  elevationDescent?: true
   difficulty?: true
   gpxFileUrl?: true
   gpxFileName?: true
@@ -135,6 +151,8 @@ export type RouteMaxAggregateInputType = {
   description?: true
   distance?: true
   elevation?: true
+  elevationAscent?: true
+  elevationDescent?: true
   difficulty?: true
   gpxFileUrl?: true
   gpxFileName?: true
@@ -154,6 +172,8 @@ export type RouteCountAggregateInputType = {
   description?: true
   distance?: true
   elevation?: true
+  elevationAscent?: true
+  elevationDescent?: true
   difficulty?: true
   gpxFileUrl?: true
   gpxFileName?: true
@@ -261,6 +281,8 @@ export type RouteGroupByOutputType = {
   description: string | null
   distance: number
   elevation: number
+  elevationAscent: number | null
+  elevationDescent: number | null
   difficulty: $Enums.Difficulty
   gpxFileUrl: string | null
   gpxFileName: string | null
@@ -304,6 +326,8 @@ export type RouteWhereInput = {
   description?: Prisma.StringNullableFilter<"Route"> | string | null
   distance?: Prisma.FloatFilter<"Route"> | number
   elevation?: Prisma.FloatFilter<"Route"> | number
+  elevationAscent?: Prisma.FloatNullableFilter<"Route"> | number | null
+  elevationDescent?: Prisma.FloatNullableFilter<"Route"> | number | null
   difficulty?: Prisma.EnumDifficultyFilter<"Route"> | $Enums.Difficulty
   gpxFileUrl?: Prisma.StringNullableFilter<"Route"> | string | null
   gpxFileName?: Prisma.StringNullableFilter<"Route"> | string | null
@@ -326,6 +350,8 @@ export type RouteOrderByWithRelationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   distance?: Prisma.SortOrder
   elevation?: Prisma.SortOrder
+  elevationAscent?: Prisma.SortOrderInput | Prisma.SortOrder
+  elevationDescent?: Prisma.SortOrderInput | Prisma.SortOrder
   difficulty?: Prisma.SortOrder
   gpxFileUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   gpxFileName?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -351,6 +377,8 @@ export type RouteWhereUniqueInput = Prisma.AtLeast<{
   description?: Prisma.StringNullableFilter<"Route"> | string | null
   distance?: Prisma.FloatFilter<"Route"> | number
   elevation?: Prisma.FloatFilter<"Route"> | number
+  elevationAscent?: Prisma.FloatNullableFilter<"Route"> | number | null
+  elevationDescent?: Prisma.FloatNullableFilter<"Route"> | number | null
   difficulty?: Prisma.EnumDifficultyFilter<"Route"> | $Enums.Difficulty
   gpxFileUrl?: Prisma.StringNullableFilter<"Route"> | string | null
   gpxFileName?: Prisma.StringNullableFilter<"Route"> | string | null
@@ -373,6 +401,8 @@ export type RouteOrderByWithAggregationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   distance?: Prisma.SortOrder
   elevation?: Prisma.SortOrder
+  elevationAscent?: Prisma.SortOrderInput | Prisma.SortOrder
+  elevationDescent?: Prisma.SortOrderInput | Prisma.SortOrder
   difficulty?: Prisma.SortOrder
   gpxFileUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   gpxFileName?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -401,6 +431,8 @@ export type RouteScalarWhereWithAggregatesInput = {
   description?: Prisma.StringNullableWithAggregatesFilter<"Route"> | string | null
   distance?: Prisma.FloatWithAggregatesFilter<"Route"> | number
   elevation?: Prisma.FloatWithAggregatesFilter<"Route"> | number
+  elevationAscent?: Prisma.FloatNullableWithAggregatesFilter<"Route"> | number | null
+  elevationDescent?: Prisma.FloatNullableWithAggregatesFilter<"Route"> | number | null
   difficulty?: Prisma.EnumDifficultyWithAggregatesFilter<"Route"> | $Enums.Difficulty
   gpxFileUrl?: Prisma.StringNullableWithAggregatesFilter<"Route"> | string | null
   gpxFileName?: Prisma.StringNullableWithAggregatesFilter<"Route"> | string | null
@@ -421,6 +453,8 @@ export type RouteCreateInput = {
   description?: string | null
   distance: number
   elevation: number
+  elevationAscent?: number | null
+  elevationDescent?: number | null
   difficulty: $Enums.Difficulty
   gpxFileUrl?: string | null
   gpxFileName?: string | null
@@ -442,6 +476,8 @@ export type RouteUncheckedCreateInput = {
   description?: string | null
   distance: number
   elevation: number
+  elevationAscent?: number | null
+  elevationDescent?: number | null
   difficulty: $Enums.Difficulty
   gpxFileUrl?: string | null
   gpxFileName?: string | null
@@ -463,6 +499,8 @@ export type RouteUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   distance?: Prisma.FloatFieldUpdateOperationsInput | number
   elevation?: Prisma.FloatFieldUpdateOperationsInput | number
+  elevationAscent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  elevationDescent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   difficulty?: Prisma.EnumDifficultyFieldUpdateOperationsInput | $Enums.Difficulty
   gpxFileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gpxFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -484,6 +522,8 @@ export type RouteUncheckedUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   distance?: Prisma.FloatFieldUpdateOperationsInput | number
   elevation?: Prisma.FloatFieldUpdateOperationsInput | number
+  elevationAscent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  elevationDescent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   difficulty?: Prisma.EnumDifficultyFieldUpdateOperationsInput | $Enums.Difficulty
   gpxFileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gpxFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -505,6 +545,8 @@ export type RouteCreateManyInput = {
   description?: string | null
   distance: number
   elevation: number
+  elevationAscent?: number | null
+  elevationDescent?: number | null
   difficulty: $Enums.Difficulty
   gpxFileUrl?: string | null
   gpxFileName?: string | null
@@ -525,6 +567,8 @@ export type RouteUpdateManyMutationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   distance?: Prisma.FloatFieldUpdateOperationsInput | number
   elevation?: Prisma.FloatFieldUpdateOperationsInput | number
+  elevationAscent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  elevationDescent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   difficulty?: Prisma.EnumDifficultyFieldUpdateOperationsInput | $Enums.Difficulty
   gpxFileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gpxFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -544,6 +588,8 @@ export type RouteUncheckedUpdateManyInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   distance?: Prisma.FloatFieldUpdateOperationsInput | number
   elevation?: Prisma.FloatFieldUpdateOperationsInput | number
+  elevationAscent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  elevationDescent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   difficulty?: Prisma.EnumDifficultyFieldUpdateOperationsInput | $Enums.Difficulty
   gpxFileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gpxFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -582,6 +628,8 @@ export type RouteCountOrderByAggregateInput = {
   description?: Prisma.SortOrder
   distance?: Prisma.SortOrder
   elevation?: Prisma.SortOrder
+  elevationAscent?: Prisma.SortOrder
+  elevationDescent?: Prisma.SortOrder
   difficulty?: Prisma.SortOrder
   gpxFileUrl?: Prisma.SortOrder
   gpxFileName?: Prisma.SortOrder
@@ -599,6 +647,8 @@ export type RouteCountOrderByAggregateInput = {
 export type RouteAvgOrderByAggregateInput = {
   distance?: Prisma.SortOrder
   elevation?: Prisma.SortOrder
+  elevationAscent?: Prisma.SortOrder
+  elevationDescent?: Prisma.SortOrder
   eventCount?: Prisma.SortOrder
 }
 
@@ -608,6 +658,8 @@ export type RouteMaxOrderByAggregateInput = {
   description?: Prisma.SortOrder
   distance?: Prisma.SortOrder
   elevation?: Prisma.SortOrder
+  elevationAscent?: Prisma.SortOrder
+  elevationDescent?: Prisma.SortOrder
   difficulty?: Prisma.SortOrder
   gpxFileUrl?: Prisma.SortOrder
   gpxFileName?: Prisma.SortOrder
@@ -627,6 +679,8 @@ export type RouteMinOrderByAggregateInput = {
   description?: Prisma.SortOrder
   distance?: Prisma.SortOrder
   elevation?: Prisma.SortOrder
+  elevationAscent?: Prisma.SortOrder
+  elevationDescent?: Prisma.SortOrder
   difficulty?: Prisma.SortOrder
   gpxFileUrl?: Prisma.SortOrder
   gpxFileName?: Prisma.SortOrder
@@ -643,6 +697,8 @@ export type RouteMinOrderByAggregateInput = {
 export type RouteSumOrderByAggregateInput = {
   distance?: Prisma.SortOrder
   elevation?: Prisma.SortOrder
+  elevationAscent?: Prisma.SortOrder
+  elevationDescent?: Prisma.SortOrder
   eventCount?: Prisma.SortOrder
 }
 
@@ -705,6 +761,14 @@ export type FloatFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type NullableFloatFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type EnumDifficultyFieldUpdateOperationsInput = {
   set?: $Enums.Difficulty
 }
@@ -748,6 +812,8 @@ export type RouteCreateWithoutUserInput = {
   description?: string | null
   distance: number
   elevation: number
+  elevationAscent?: number | null
+  elevationDescent?: number | null
   difficulty: $Enums.Difficulty
   gpxFileUrl?: string | null
   gpxFileName?: string | null
@@ -768,6 +834,8 @@ export type RouteUncheckedCreateWithoutUserInput = {
   description?: string | null
   distance: number
   elevation: number
+  elevationAscent?: number | null
+  elevationDescent?: number | null
   difficulty: $Enums.Difficulty
   gpxFileUrl?: string | null
   gpxFileName?: string | null
@@ -817,6 +885,8 @@ export type RouteScalarWhereInput = {
   description?: Prisma.StringNullableFilter<"Route"> | string | null
   distance?: Prisma.FloatFilter<"Route"> | number
   elevation?: Prisma.FloatFilter<"Route"> | number
+  elevationAscent?: Prisma.FloatNullableFilter<"Route"> | number | null
+  elevationDescent?: Prisma.FloatNullableFilter<"Route"> | number | null
   difficulty?: Prisma.EnumDifficultyFilter<"Route"> | $Enums.Difficulty
   gpxFileUrl?: Prisma.StringNullableFilter<"Route"> | string | null
   gpxFileName?: Prisma.StringNullableFilter<"Route"> | string | null
@@ -837,6 +907,8 @@ export type RouteCreateWithoutEventsInput = {
   description?: string | null
   distance: number
   elevation: number
+  elevationAscent?: number | null
+  elevationDescent?: number | null
   difficulty: $Enums.Difficulty
   gpxFileUrl?: string | null
   gpxFileName?: string | null
@@ -857,6 +929,8 @@ export type RouteUncheckedCreateWithoutEventsInput = {
   description?: string | null
   distance: number
   elevation: number
+  elevationAscent?: number | null
+  elevationDescent?: number | null
   difficulty: $Enums.Difficulty
   gpxFileUrl?: string | null
   gpxFileName?: string | null
@@ -893,6 +967,8 @@ export type RouteUpdateWithoutEventsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   distance?: Prisma.FloatFieldUpdateOperationsInput | number
   elevation?: Prisma.FloatFieldUpdateOperationsInput | number
+  elevationAscent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  elevationDescent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   difficulty?: Prisma.EnumDifficultyFieldUpdateOperationsInput | $Enums.Difficulty
   gpxFileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gpxFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -913,6 +989,8 @@ export type RouteUncheckedUpdateWithoutEventsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   distance?: Prisma.FloatFieldUpdateOperationsInput | number
   elevation?: Prisma.FloatFieldUpdateOperationsInput | number
+  elevationAscent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  elevationDescent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   difficulty?: Prisma.EnumDifficultyFieldUpdateOperationsInput | $Enums.Difficulty
   gpxFileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gpxFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -933,6 +1011,8 @@ export type RouteCreateManyUserInput = {
   description?: string | null
   distance: number
   elevation: number
+  elevationAscent?: number | null
+  elevationDescent?: number | null
   difficulty: $Enums.Difficulty
   gpxFileUrl?: string | null
   gpxFileName?: string | null
@@ -952,6 +1032,8 @@ export type RouteUpdateWithoutUserInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   distance?: Prisma.FloatFieldUpdateOperationsInput | number
   elevation?: Prisma.FloatFieldUpdateOperationsInput | number
+  elevationAscent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  elevationDescent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   difficulty?: Prisma.EnumDifficultyFieldUpdateOperationsInput | $Enums.Difficulty
   gpxFileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gpxFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -972,6 +1054,8 @@ export type RouteUncheckedUpdateWithoutUserInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   distance?: Prisma.FloatFieldUpdateOperationsInput | number
   elevation?: Prisma.FloatFieldUpdateOperationsInput | number
+  elevationAscent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  elevationDescent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   difficulty?: Prisma.EnumDifficultyFieldUpdateOperationsInput | $Enums.Difficulty
   gpxFileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gpxFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -992,6 +1076,8 @@ export type RouteUncheckedUpdateManyWithoutUserInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   distance?: Prisma.FloatFieldUpdateOperationsInput | number
   elevation?: Prisma.FloatFieldUpdateOperationsInput | number
+  elevationAscent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  elevationDescent?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   difficulty?: Prisma.EnumDifficultyFieldUpdateOperationsInput | $Enums.Difficulty
   gpxFileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gpxFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1042,6 +1128,8 @@ export type RouteSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   description?: boolean
   distance?: boolean
   elevation?: boolean
+  elevationAscent?: boolean
+  elevationDescent?: boolean
   difficulty?: boolean
   gpxFileUrl?: boolean
   gpxFileName?: boolean
@@ -1065,6 +1153,8 @@ export type RouteSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   description?: boolean
   distance?: boolean
   elevation?: boolean
+  elevationAscent?: boolean
+  elevationDescent?: boolean
   difficulty?: boolean
   gpxFileUrl?: boolean
   gpxFileName?: boolean
@@ -1086,6 +1176,8 @@ export type RouteSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   description?: boolean
   distance?: boolean
   elevation?: boolean
+  elevationAscent?: boolean
+  elevationDescent?: boolean
   difficulty?: boolean
   gpxFileUrl?: boolean
   gpxFileName?: boolean
@@ -1107,6 +1199,8 @@ export type RouteSelectScalar = {
   description?: boolean
   distance?: boolean
   elevation?: boolean
+  elevationAscent?: boolean
+  elevationDescent?: boolean
   difficulty?: boolean
   gpxFileUrl?: boolean
   gpxFileName?: boolean
@@ -1121,7 +1215,7 @@ export type RouteSelectScalar = {
   updatedAt?: boolean
 }
 
-export type RouteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "distance" | "elevation" | "difficulty" | "gpxFileUrl" | "gpxFileName" | "uploadedBy" | "uploadDate" | "startLocation" | "endLocation" | "routeType" | "tags" | "eventCount" | "createdAt" | "updatedAt", ExtArgs["result"]["route"]>
+export type RouteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "distance" | "elevation" | "elevationAscent" | "elevationDescent" | "difficulty" | "gpxFileUrl" | "gpxFileName" | "uploadedBy" | "uploadDate" | "startLocation" | "endLocation" | "routeType" | "tags" | "eventCount" | "createdAt" | "updatedAt", ExtArgs["result"]["route"]>
 export type RouteInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   events?: boolean | Prisma.Route$eventsArgs<ExtArgs>
@@ -1146,6 +1240,8 @@ export type $RoutePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     description: string | null
     distance: number
     elevation: number
+    elevationAscent: number | null
+    elevationDescent: number | null
     difficulty: $Enums.Difficulty
     gpxFileUrl: string | null
     gpxFileName: string | null
@@ -1588,6 +1684,8 @@ export interface RouteFieldRefs {
   readonly description: Prisma.FieldRef<"Route", 'String'>
   readonly distance: Prisma.FieldRef<"Route", 'Float'>
   readonly elevation: Prisma.FieldRef<"Route", 'Float'>
+  readonly elevationAscent: Prisma.FieldRef<"Route", 'Float'>
+  readonly elevationDescent: Prisma.FieldRef<"Route", 'Float'>
   readonly difficulty: Prisma.FieldRef<"Route", 'Difficulty'>
   readonly gpxFileUrl: Prisma.FieldRef<"Route", 'String'>
   readonly gpxFileName: Prisma.FieldRef<"Route", 'String'>

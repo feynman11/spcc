@@ -154,6 +154,8 @@ export const RouteScalarFieldEnum = {
   description: 'description',
   distance: 'distance',
   elevation: 'elevation',
+  elevationAscent: 'elevationAscent',
+  elevationDescent: 'elevationDescent',
   difficulty: 'difficulty',
   gpxFileUrl: 'gpxFileUrl',
   gpxFileName: 'gpxFileName',

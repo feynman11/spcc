@@ -270,7 +270,7 @@ function DashboardContent() {
                           {route.name}
                         </h4>
                         <p className="text-sm text-gray-500 mb-2">
-                          {route.distance}km • {route.elevation}m elevation
+                          {route.distance}km • +{route.elevationAscent ?? route.elevation}m / -{route.elevationDescent ?? 0}m
                         </p>
                         <p className="text-sm text-red-600 font-medium">
                           {route.startLocation}

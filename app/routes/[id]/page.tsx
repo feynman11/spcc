@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc/client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import { RouteMap } from "@/components/RouteMap";
+import { ElevationProfile } from "@/components/ElevationProfile";
 import Link from "next/link";
 
 export default function RouteDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -133,14 +134,18 @@ export default function RouteDetailPage({ params }: { params: Promise<{ id: stri
 
         {route.description && <p className="text-gray-600 mb-6">{route.description}</p>}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mb-6">
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-900">{route.distance}km</div>
             <div className="text-sm text-gray-500">Distance</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">{route.elevation}m</div>
-            <div className="text-sm text-gray-500">Elevation</div>
+            <div className="text-2xl font-bold text-green-600">+{route.elevationAscent ?? route.elevation}m</div>
+            <div className="text-sm text-gray-500">Ascent</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-red-600">-{route.elevationDescent ?? 0}m</div>
+            <div className="text-sm text-gray-500">Descent</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-900 capitalize">{route.routeType}</div>
@@ -204,6 +209,16 @@ export default function RouteDetailPage({ params }: { params: Promise<{ id: stri
             routeDistance={route?.distance}
             routeElevation={route?.elevation}
           />
+        </div>
+      </div>
+
+      {/* Elevation Profile */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Elevation Profile</h3>
+        </div>
+        <div className="p-6">
+          <ElevationProfile gpxObjectName={route?.gpxObjectName} />
         </div>
       </div>
 

@@ -24,6 +24,8 @@ export const routesRouter = router({
       description: route.description,
       distance: route.distance,
       elevation: route.elevation,
+      elevationAscent: route.elevationAscent ?? route.elevation,
+      elevationDescent: route.elevationDescent ?? 0,
       difficulty: route.difficulty,
       gpxObjectName: route.gpxFileUrl, // This now stores the MinIO object name
       gpxFileName: route.gpxFileName,
@@ -62,6 +64,8 @@ export const routesRouter = router({
         description: route.description,
         distance: route.distance,
         elevation: route.elevation,
+        elevationAscent: route.elevationAscent ?? route.elevation,
+        elevationDescent: route.elevationDescent ?? 0,
         difficulty: route.difficulty,
         gpxObjectName: route.gpxFileUrl, // This now stores the MinIO object name
         gpxFileName: route.gpxFileName,
@@ -122,6 +126,8 @@ export const routesRouter = router({
         description: route.description,
         distance: route.distance,
         elevation: route.elevation,
+        elevationAscent: route.elevationAscent ?? route.elevation,
+        elevationDescent: route.elevationDescent ?? 0,
         difficulty: route.difficulty,
         gpxObjectName: route.gpxFileUrl, // This now stores the MinIO object name
         gpxFileName: route.gpxFileName,
@@ -145,6 +151,8 @@ export const routesRouter = router({
         description: z.string().optional(),
         distance: z.number(),
         elevation: z.number(),
+        elevationAscent: z.number().optional(),
+        elevationDescent: z.number().optional(),
         difficulty: difficultyEnum,
         gpxObjectName: z.string().optional(), // MinIO object name
         gpxFileName: z.string().optional(),
@@ -180,6 +188,8 @@ export const routesRouter = router({
           description: input.description,
           distance: input.distance,
           elevation: input.elevation,
+          elevationAscent: input.elevationAscent ?? input.elevation,
+          elevationDescent: input.elevationDescent ?? 0,
           difficulty: input.difficulty,
           gpxFileUrl: input.gpxObjectName, // Store MinIO object name in gpxFileUrl field
           gpxFileName: input.gpxFileName,

@@ -4,9 +4,8 @@ datasource db {
 }
 
 generator client {
-  provider   = "prisma-client"
-  output     = "../generated/prisma"
-
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 enum MembershipType {
@@ -135,23 +134,25 @@ model Member {
 }
 
 model Route {
-  id            String     @id @default(cuid())
-  name          String
-  description   String?
-  distance      Float // in kilometers
-  elevation     Float // in meters
-  difficulty    Difficulty
-  gpxFileUrl    String? // URL to stored GPX file
-  gpxFileName   String?
-  uploadedBy    String
-  uploadDate    DateTime   @default(now())
-  startLocation String
-  endLocation   String?
-  routeType     RouteType
-  tags          String[]   @default([])
-  eventCount    Int        @default(0)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id               String     @id @default(cuid())
+  name             String
+  description      String?
+  distance         Float // in kilometers
+  elevation        Float // in meters (kept for backward compatibility, represents ascent)
+  elevationAscent  Float? // in meters
+  elevationDescent Float? // in meters
+  difficulty       Difficulty
+  gpxFileUrl       String? // URL to stored GPX file
+  gpxFileName      String?
+  uploadedBy       String
+  uploadDate       DateTime   @default(now())
+  startLocation    String
+  endLocation      String?
+  routeType        RouteType
+  tags             String[]   @default([])
+  eventCount       Int        @default(0)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   user   User    @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
   events Event[]

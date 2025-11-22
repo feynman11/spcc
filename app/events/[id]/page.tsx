@@ -277,7 +277,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             <h3 className="text-lg font-semibold text-gray-900">Route Map</h3>
             {route && (
               <p className="text-sm text-gray-500 mt-1">
-              {route.name} • {route.distance}km • {route.elevation}m elevation
+              {route.name} • {route.distance}km • +{route.elevationAscent ?? route.elevation}m / -{route.elevationDescent ?? 0}m
             </p>
             )}
           </div>

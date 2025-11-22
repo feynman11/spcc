@@ -40,7 +40,10 @@ function GpxDownloadButton({ objectName }: { objectName: string }) {
 interface GPXData {
   name: string;
   distance: number;
-  elevation: number;
+  elevation: number; // kept for backward compatibility
+  elevationAscent: number;
+  elevationDescent: number;
+  elevationProfile: { distance: number; elevation: number }[]; // for elevation chart
   coordinates: [number, number][];
   startPoint: [number, number];
   endPoint: [number, number];
@@ -139,9 +142,12 @@ export default function Routes() {
       }
       
       const coordinates: [number, number][] = [];
+      const elevationProfile: { distance: number; elevation: number }[] = [];
       let totalDistance = 0;
-      let minElevation = Infinity;
-      let maxElevation = -Infinity;
+      let totalAscent = 0;
+      let totalDescent = 0;
+      let previousElevation: number | null = null;
+      let cumulativeDistance = 0;
       
       trackPoints.forEach((point, index) => {
         const lat = parseFloat(point.getAttribute("lat") || "0");
@@ -150,21 +156,40 @@ export default function Routes() {
         if (isNaN(lat) || isNaN(lon)) {
           return; // Skip invalid coordinates
         }
+        
         const eleElement = point.querySelector("ele");
-        const elevation = eleElement ? parseFloat(eleElement.textContent || "0") : 0;
+        const elevation = eleElement ? parseFloat(eleElement.textContent || "0") : null;
         
         coordinates.push([lat, lon]);
-        
-        if (elevation !== 0) {
-          minElevation = Math.min(minElevation, elevation);
-          maxElevation = Math.max(maxElevation, elevation);
-        }
         
         // Calculate distance between consecutive points
         if (index > 0) {
           const prevPoint = coordinates[index - 1];
           const distance = calculateDistance(prevPoint[0], prevPoint[1], lat, lon);
           totalDistance += distance;
+          cumulativeDistance += distance;
+        }
+        
+        // Calculate ascent and descent
+        if (elevation !== null && previousElevation !== null) {
+          const elevationDiff = elevation - previousElevation;
+          if (elevationDiff > 0) {
+            totalAscent += elevationDiff;
+          } else if (elevationDiff < 0) {
+            totalDescent += Math.abs(elevationDiff);
+          }
+        }
+        
+        // Store elevation profile data point
+        if (elevation !== null) {
+          elevationProfile.push({
+            distance: cumulativeDistance,
+            elevation: elevation
+          });
+        }
+        
+        if (elevation !== null) {
+          previousElevation = elevation;
         }
       });
       
@@ -172,14 +197,16 @@ export default function Routes() {
         throw new Error("No valid coordinates found in GPX file");
       }
       
-      const elevationGain = maxElevation === -Infinity ? 0 : Math.round(maxElevation - minElevation);
       const startPoint = coordinates[0];
       const endPoint = coordinates[coordinates.length - 1];
       
       return {
         name,
         distance: Math.round(totalDistance * 100) / 100, // Round to 2 decimal places
-        elevation: elevationGain,
+        elevation: Math.round(totalAscent), // kept for backward compatibility
+        elevationAscent: Math.round(totalAscent),
+        elevationDescent: Math.round(totalDescent),
+        elevationProfile,
         coordinates,
         startPoint,
         endPoint
@@ -274,6 +301,8 @@ export default function Routes() {
         description: formData.description || undefined,
         distance: parseFloat(formData.distance),
         elevation: parseInt(formData.elevation),
+        elevationAscent: gpxData.elevationAscent,
+        elevationDescent: gpxData.elevationDescent,
         difficulty: formData.difficulty,
         gpxObjectName: objectName,
         gpxFileName: fileName,
@@ -635,7 +664,9 @@ export default function Routes() {
                   </svg>
                   Elevation
                 </span>
-                <span className="font-medium">{route.elevation}m</span>
+                <span className="font-medium">
+                  +{route.elevationAscent ?? route.elevation}m / -{route.elevationDescent ?? 0}m
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
