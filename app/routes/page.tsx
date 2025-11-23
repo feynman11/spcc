@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { PaidMemberOverlay } from "@/components/PaidMemberOverlay";
 import { MemberProfileOverlay } from "@/components/MemberProfileOverlay";
+import { usePageViewTracking } from "@/lib/analytics";
 
 function GpxDownloadButton({ objectName }: { objectName: string }) {
   const utils = trpc.useUtils();
@@ -50,6 +51,7 @@ interface GPXData {
 }
 
 export default function Routes() {
+  usePageViewTracking();
   const utils = trpc.useUtils();
   const { data: currentMember, isLoading: memberLoading } = trpc.members.getCurrentMember.useQuery();
   const { data: allRoutes, isLoading: routesLoading } = trpc.routes.getAllRoutes.useQuery();

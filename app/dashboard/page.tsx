@@ -4,12 +4,17 @@ import { trpc } from "@/lib/trpc/client";
 import { RouteProtection } from "@/components/RouteProtection";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AdminStats } from "@/components/AdminStats";
+import { usePageViewTracking } from "@/lib/analytics";
 
 function DashboardContent() {
+  usePageViewTracking();
   const router = useRouter();
   const { data: currentMember, isLoading: memberLoading } = trpc.members.getCurrentMember.useQuery();
   const { data: upcomingEvents, isLoading: eventsLoading } = trpc.events.getUpcomingEvents.useQuery();
   const { data: allRoutes, isLoading: routesLoading } = trpc.routes.getAllRoutes.useQuery();
+  const { data: currentUser } = trpc.members.getCurrentUser.useQuery();
+  const isAdmin = currentUser?.role === "admin";
 
   // Show loading spinner only when queries are actually loading
   if (memberLoading || eventsLoading || routesLoading) {
@@ -323,6 +328,13 @@ function DashboardContent() {
           </div>
         </div>
       </div>
+
+      {/* Admin Stats Section */}
+      {isAdmin && (
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <AdminStats />
+        </div>
+      )}
     </div>
   );
 }

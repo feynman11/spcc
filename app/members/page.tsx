@@ -5,8 +5,10 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { usePageViewTracking } from "@/lib/analytics";
 
 export default function Members() {
+  usePageViewTracking();
   const { data: session } = useSession();
   const router = useRouter();
   const utils = trpc.useUtils();

@@ -74,6 +74,7 @@ model User {
   eventWaitingList    Event[]              @relation("EventWaitingList")
   uploadedRoutes      Route[]
   eventParticipations EventParticipation[]
+  pageViews           PageView[]
 }
 
 model Account {
@@ -211,4 +212,18 @@ model EventParticipation {
   @@index([eventId])
   @@index([userId])
   @@index([eventId, userId])
+}
+
+model PageView {
+  id        String   @id @default(cuid())
+  userId    String?
+  path      String
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([timestamp])
+  @@index([path])
+  @@index([userId])
 }

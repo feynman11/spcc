@@ -3,8 +3,10 @@
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
 import Link from "next/link";
+import { usePageViewTracking } from "@/lib/analytics";
 
 export default function Calendar() {
+  usePageViewTracking();
   const { data: allEvents, isLoading: eventsLoading } = trpc.events.getAllEvents.useQuery();
   const [currentDate, setCurrentDate] = useState(new Date());
   

@@ -8,8 +8,10 @@ import { PaidMemberOverlay } from "@/components/PaidMemberOverlay";
 import { MemberProfileOverlay } from "@/components/MemberProfileOverlay";
 import { useEventJoinLeave } from "@/hooks/useEventJoinLeave";
 import { DeleteEventDialog } from "@/components/DeleteEventDialog";
+import { usePageViewTracking } from "@/lib/analytics";
 
 export default function Events() {
+  usePageViewTracking();
   const utils = trpc.useUtils();
   const { data: currentMember, isLoading: memberLoading } = trpc.members.getCurrentMember.useQuery();
   const { data: allEvents, isLoading: eventsLoading } = trpc.events.getAllEvents.useQuery();
