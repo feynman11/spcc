@@ -113,6 +113,13 @@ MINIO_USE_SSL="false"
 MINIO_ACCESS_KEY="minioadmin"
 MINIO_SECRET_KEY="minioadmin"
 MINIO_BUCKET_NAME="gpx-files"
+
+# Zoho Mail (Optional - for admin email notifications)
+# ZOHO_CLIENT_ID="your-client-id"
+# ZOHO_CLIENT_SECRET="your-client-secret"
+# ZOHO_REFRESH_TOKEN="your-refresh-token"
+# ZOHO_ACCOUNT_ID="123456789"
+# ZOHO_FROM_ADDRESS="noreply@yourdomain.com"
 ```
 
 **Note:** 

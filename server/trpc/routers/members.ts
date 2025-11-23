@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure, publicProcedure, adminProcedure, memberProcedure, userProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
+import { notifyAdminsOfNewMember } from "@/lib/zoho/notifications";
 
 const membershipTypeEnum = z.enum(["full", "social", "junior"]);
 
@@ -200,6 +201,20 @@ export const membersRouter = router({
           membershipType: input.membershipType,
           isActive: true,
         },
+      });
+
+      // Send email notification to admins (non-blocking)
+      // Don't await - let it run in background so member creation succeeds even if email fails
+      notifyAdminsOfNewMember({
+        firstName: member.firstName,
+        lastName: member.lastName,
+        email: member.email,
+        phone: member.phone,
+        membershipType: member.membershipType,
+        joinDate: member.joinDate,
+      }).catch((error) => {
+        // Log error but don't throw - member creation should succeed
+        console.error("[Members] Failed to send admin notification:", error);
       });
 
       return member.id;

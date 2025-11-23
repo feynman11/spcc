@@ -10,7 +10,9 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "zoho:get-account-id": "bun run scripts/get-zoho-account-id.ts",
+    "zoho:get-refresh-token": "bun run scripts/get-zoho-refresh-token.ts"
   },
   "dependencies": {
     "@prisma/client": "6.19.0",
