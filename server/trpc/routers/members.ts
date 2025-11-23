@@ -314,5 +314,86 @@ export const membersRouter = router({
 
       return { success: true, routesReassigned: userToDelete.uploadedRoutes.length };
     }),
+
+  promoteToAdmin: adminProcedure
+    .input(z.object({ userId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      // Prevent admins from promoting themselves
+      if (input.userId === ctx.userId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You are already an admin",
+        });
+      }
+
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: input.userId },
+      });
+
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+
+      if (user.role === "admin") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "User is already an admin",
+        });
+      }
+
+      const updatedUser = await ctx.prisma.user.update({
+        where: { id: input.userId },
+        data: { role: "admin" },
+      });
+
+      return updatedUser;
+    }),
+
+  removeAdmin: adminProcedure
+    .input(z.object({ userId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      // Prevent admins from removing their own admin status
+      if (input.userId === ctx.userId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You cannot remove your own admin status",
+        });
+      }
+
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: input.userId },
+      });
+
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+
+      if (user.role !== "admin") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "User is not an admin",
+        });
+      }
+
+      // Check if user has a member profile, if so set role to member, otherwise to user
+      const member = await ctx.prisma.member.findUnique({
+        where: { userId: input.userId },
+      });
+
+      const newRole = member ? "member" : "user";
+
+      const updatedUser = await ctx.prisma.user.update({
+        where: { id: input.userId },
+        data: { role: newRole },
+      });
+
+      return updatedUser;
+    }),
 });
 

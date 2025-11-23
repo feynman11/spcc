@@ -66,6 +66,26 @@ export default function Members() {
     },
   });
 
+  const promoteToAdmin = trpc.members.promoteToAdmin.useMutation({
+    onSuccess: () => {
+      toast.success("User promoted to admin successfully!");
+      utils.members.getAllUsers.invalidate();
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to promote user to admin");
+    },
+  });
+
+  const removeAdmin = trpc.members.removeAdmin.useMutation({
+    onSuccess: () => {
+      toast.success("Admin status removed successfully!");
+      utils.members.getAllUsers.invalidate();
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to remove admin status");
+    },
+  });
+
   const createMember = trpc.members.createMember.useMutation({
     onSuccess: () => {
       toast.success("Member profile created successfully!");
@@ -526,335 +546,274 @@ export default function Members() {
             <>
               {/* Users by Role Sections */}
               {usersData.grouped.user.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200 bg-yellow-50">
+                <div>
+                  <div className="mb-6">
                     <h3 className="text-lg font-semibold text-gray-900">
                       Pending Approval ({usersData.grouped.user.length})
                     </h3>
                     <p className="text-sm text-gray-600 mt-1">Users waiting for admin approval</p>
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Name
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Email
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Joined
-                          </th>
-                          {currentUser?.role === "admin" && (
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Actions
-                            </th>
-                          )}
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {usersData.grouped.user.map((user) => (
-                          <tr key={user.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">
-                                {user.name || user.email}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-500">{user.email}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-500">
-                                {new Date(user.createdAt).toLocaleDateString()}
-                              </div>
-                            </td>
-                            {currentUser?.role === "admin" && (
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => handleApproveUser(user.id)}
-                                    disabled={approveUser.isPending}
-                                    className="text-sm bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                                  >
-                                    Approve
-                                  </button>
-                                  {user.id !== currentUser?.id && (
-                                    <button
-                                      onClick={() => handleDeleteUser(user.id, user.email, user.name)}
-                                      disabled={deleteUser.isPending}
-                                      className="text-sm bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-                                    >
-                                      Delete
-                                    </button>
-                                  )}
-                                </div>
-                              </td>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {usersData.grouped.user.map((user) => (
+                      <div key={user.id} className="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-lg transition-all duration-200">
+                        <div className="mb-4">
+                          <h4 className="text-lg font-semibold text-gray-900">
+                            {user.name || user.email}
+                          </h4>
+                          <p className="text-sm text-gray-500 mt-1">{user.email}</p>
+                        </div>
+                        
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">Joined:</span>
+                            <span className="text-sm text-gray-700">
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {currentUser?.role === "admin" && (
+                          <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-100">
+                            <button
+                              onClick={() => handleApproveUser(user.id)}
+                              disabled={approveUser.isPending}
+                              className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                            >
+                              Approve
+                            </button>
+                            {user.id !== currentUser?.id && (
+                              <button
+                                onClick={() => handleDeleteUser(user.id, user.email, user.name)}
+                                disabled={deleteUser.isPending}
+                                className="text-xs bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                              >
+                                Delete
+                              </button>
                             )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
 
               {/* Members Section */}
               {usersData.grouped.member.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200 bg-green-50">
+                <div>
+                  <div className="mb-6">
                     <h3 className="text-lg font-semibold text-gray-900">
                       Members ({usersData.grouped.member.length})
                     </h3>
                     <p className="text-sm text-gray-600 mt-1">Approved members with full access</p>
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Name
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Email
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Membership
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Join Date
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Paid
-                          </th>
-                          {currentUser?.role === "admin" && (
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Actions
-                            </th>
-                          )}
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {usersData.grouped.member.map((user) => (
-                          <tr key={user.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">
-                                {user.member 
-                                  ? `${user.member.firstName} ${user.member.lastName}`
-                                  : user.name || user.email}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-500">{user.email}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              {user.member ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {usersData.grouped.member.map((user) => (
+                      <div key={user.id} className="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-lg transition-all duration-200">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <h4 className="text-lg font-semibold text-gray-900">
+                              {user.member 
+                                ? `${user.member.firstName} ${user.member.lastName}`
+                                : user.name || user.email}
+                            </h4>
+                            {currentUser?.role === "admin" && (
+                              <p className="text-sm text-gray-500 mt-1">{user.email}</p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {currentUser?.role === "admin" && (
+                          <div className="space-y-2 mb-4">
+                            {user.member && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500">Membership:</span>
                                 <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 capitalize">
                                   {user.member.membershipType}
                                 </span>
-                              ) : (
-                                <span className="text-sm text-gray-400">No profile</span>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-500">
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500">Joined:</span>
+                              <span className="text-sm text-gray-700">
                                 {user.member 
                                   ? new Date(user.member.joinDate).toLocaleDateString()
                                   : new Date(user.createdAt).toLocaleDateString()}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                user.member?.isActive 
-                                  ? "bg-green-100 text-green-800" 
-                                  : "bg-gray-100 text-gray-800"
-                              }`}>
-                                {user.member?.isActive ? "Active" : "Inactive"}
                               </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              {user.member ? (
-                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                  user.member.isPaid 
-                                    ? "bg-green-100 text-green-800" 
-                                    : "bg-red-100 text-red-800"
-                                }`}>
-                                  {user.member.isPaid ? "Paid" : "Unpaid"}
-                                </span>
-                              ) : (
-                                <span className="text-sm text-gray-400">-</span>
-                              )}
-                            </td>
-                            {currentUser?.role === "admin" && user.member && (
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => {
-                                      togglePaidStatus.mutate({
-                                        memberId: user.member!.id,
-                                        isPaid: !user.member!.isPaid,
-                                      });
-                                    }}
-                                    disabled={togglePaidStatus.isPending}
-                                    className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                                      user.member.isPaid
-                                        ? "bg-red-100 text-red-700 hover:bg-red-200"
-                                        : "bg-green-100 text-green-700 hover:bg-green-200"
-                                    }`}
-                                  >
-                                    {user.member.isPaid ? "Mark Unpaid" : "Mark Paid"}
-                                  </button>
-                                  {user.id !== currentUser?.id && (
-                                    <button
-                                      onClick={() => handleDeleteUser(user.id, user.email, user.name)}
-                                      disabled={deleteUser.isPending}
-                                      className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-                                    >
-                                      Delete
-                                    </button>
-                                  )}
-                                </div>
-                              </td>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            user.member?.isActive 
+                              ? "bg-green-100 text-green-800" 
+                              : "bg-gray-100 text-gray-800"
+                          }`}>
+                            {user.member?.isActive ? "Active" : "Inactive"}
+                          </span>
+                          {user.member ? (
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              user.member.isPaid 
+                                ? "bg-green-100 text-green-800" 
+                                : "bg-red-100 text-red-800"
+                            }`}>
+                              {user.member.isPaid ? "Paid" : "Unpaid"}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400">No profile</span>
+                          )}
+                        </div>
+                        
+                        {currentUser?.role === "admin" && user.member && (
+                          <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-100">
+                            <button
+                              onClick={() => {
+                                togglePaidStatus.mutate({
+                                  memberId: user.member!.id,
+                                  isPaid: !user.member!.isPaid,
+                                });
+                              }}
+                              disabled={togglePaidStatus.isPending}
+                              className={`text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
+                                user.member.isPaid
+                                  ? "bg-red-100 text-red-700 hover:bg-red-200"
+                                  : "bg-green-100 text-green-700 hover:bg-green-200"
+                              }`}
+                            >
+                              {user.member.isPaid ? "Mark Unpaid" : "Mark Paid"}
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Are you sure you want to promote ${user.member?.firstName} ${user.member?.lastName} to admin?`)) {
+                                  promoteToAdmin.mutate({ userId: user.id });
+                                }
+                              }}
+                              disabled={promoteToAdmin.isPending}
+                              className="text-xs bg-purple-600 text-white px-3 py-1.5 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                            >
+                              Make Admin
+                            </button>
+                            {user.id !== currentUser?.id && (
+                              <button
+                                onClick={() => handleDeleteUser(user.id, user.email, user.name)}
+                                disabled={deleteUser.isPending}
+                                className="text-xs bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                              >
+                                Delete
+                              </button>
                             )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
 
               {/* Admins Section */}
               {usersData.grouped.admin.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200 bg-purple-50">
+                <div>
+                  <div className="mb-6">
                     <h3 className="text-lg font-semibold text-gray-900">
                       Administrators ({usersData.grouped.admin.length})
                     </h3>
                     <p className="text-sm text-gray-600 mt-1">Users with admin privileges</p>
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Name
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Email
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Joined
-                          </th>
-                          {currentUser?.role === "admin" && (
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Actions
-                            </th>
-                          )}
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {usersData.grouped.admin.map((user) => (
-                          <tr key={user.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">
-                                {user.name || user.email}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-500">{user.email}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-500">
-                                {new Date(user.createdAt).toLocaleDateString()}
-                              </div>
-                            </td>
-                            {currentUser?.role === "admin" && (
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                {user.id !== currentUser?.id && (
-                                  <button
-                                    onClick={() => handleDeleteUser(user.id, user.email, user.name)}
-                                    disabled={deleteUser.isPending}
-                                    className="text-sm bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-                                  >
-                                    Delete
-                                  </button>
-                                )}
-                              </td>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {usersData.grouped.admin.map((user) => (
+                      <div key={user.id} className="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-lg transition-all duration-200">
+                        <div className="mb-4">
+                          <h4 className="text-lg font-semibold text-gray-900">
+                            {user.name || user.email}
+                          </h4>
+                          <p className="text-sm text-gray-500 mt-1">{user.email}</p>
+                        </div>
+                        
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">Joined:</span>
+                            <span className="text-sm text-gray-700">
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {currentUser?.role === "admin" && (
+                          <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-100">
+                            {user.id !== currentUser?.id && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    if (confirm(`Are you sure you want to remove admin status from ${user.name || user.email}?`)) {
+                                      removeAdmin.mutate({ userId: user.id });
+                                    }
+                                  }}
+                                  disabled={removeAdmin.isPending}
+                                  className="text-xs bg-orange-600 text-white px-3 py-1.5 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+                                >
+                                  Remove Admin
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUser(user.id, user.email, user.name)}
+                                  disabled={deleteUser.isPending}
+                                  className="text-xs bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                                >
+                                  Delete
+                                </button>
+                              </>
                             )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
 
               {/* Public Users Section (if any) */}
               {usersData.grouped.public.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <div>
+                  <div className="mb-6">
                     <h3 className="text-lg font-semibold text-gray-900">
                       Public Users ({usersData.grouped.public.length})
                     </h3>
                     <p className="text-sm text-gray-600 mt-1">Public users</p>
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Name
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Email
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Joined
-                          </th>
-                          {currentUser?.role === "admin" && (
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Actions
-                            </th>
-                          )}
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {usersData.grouped.public.map((user) => (
-                          <tr key={user.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">
-                                {user.name || user.email}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-500">{user.email}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-500">
-                                {new Date(user.createdAt).toLocaleDateString()}
-                              </div>
-                            </td>
-                            {currentUser?.role === "admin" && (
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                {user.id !== currentUser?.id && (
-                                  <button
-                                    onClick={() => handleDeleteUser(user.id, user.email, user.name)}
-                                    disabled={deleteUser.isPending}
-                                    className="text-sm bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-                                  >
-                                    Delete
-                                  </button>
-                                )}
-                              </td>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {usersData.grouped.public.map((user) => (
+                      <div key={user.id} className="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-lg transition-all duration-200">
+                        <div className="mb-4">
+                          <h4 className="text-lg font-semibold text-gray-900">
+                            {user.name || user.email}
+                          </h4>
+                          <p className="text-sm text-gray-500 mt-1">{user.email}</p>
+                        </div>
+                        
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">Joined:</span>
+                            <span className="text-sm text-gray-700">
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {currentUser?.role === "admin" && (
+                          <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-100">
+                            {user.id !== currentUser?.id && (
+                              <button
+                                onClick={() => handleDeleteUser(user.id, user.email, user.name)}
+                                disabled={deleteUser.isPending}
+                                className="text-xs bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                              >
+                                Delete
+                              </button>
                             )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

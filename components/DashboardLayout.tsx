@@ -19,10 +19,14 @@ export default function DashboardLayout({
   const clubConfig = useClubConfig();
   const { data: user } = trpc.members.getCurrentMember.useQuery();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showSwipeHint, setShowSwipeHint] = useState(true);
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const [navPillExpanded, setNavPillExpanded] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const startX = useRef<number>(0);
   const startY = useRef<number>(0);
   const isDragging = useRef<boolean>(false);
+  const lastScrollY = useRef<number>(0);
 
   const navigation = [
     { id: "dashboard", name: "Dashboard", icon: "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z", path: "/dashboard" },
@@ -34,6 +38,44 @@ export default function DashboardLayout({
 
   const activeTab = navigation.find((nav) => pathname?.startsWith(nav.path))?.id || "dashboard";
   const currentIndex = navigation.findIndex((nav) => nav.id === activeTab);
+
+  // Hide swipe hint after 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSwipeHint(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Handle header visibility on scroll
+  useEffect(() => {
+    const element = contentRef.current;
+    if (!element) return;
+
+    const handleScroll = () => {
+      const currentScrollY = element.scrollTop;
+      
+      // Show header at top of page
+      if (currentScrollY < 10) {
+        setHeaderVisible(true);
+      } else if (currentScrollY > lastScrollY.current) {
+        // Scrolling down - hide header
+        setHeaderVisible(false);
+      } else {
+        // Scrolling up - show header
+        setHeaderVisible(true);
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+
+    element.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      element.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   // Attach non-passive touch event listeners to allow preventDefault
   useEffect(() => {
@@ -238,7 +280,9 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="bg-white shadow-sm border-b border-gray-100 lg:hidden">
+        <header className={`bg-white shadow-sm border-b border-gray-100 lg:hidden fixed top-0 left-0 right-0 z-40 transition-transform duration-300 ease-in-out ${
+          headerVisible ? "translate-y-0" : "-translate-y-full"
+        }`}>
           <div className="flex items-center justify-between px-4 py-4">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -259,11 +303,11 @@ export default function DashboardLayout({
               </svg>
             </button>
             <div className="flex items-center">
-              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
                 <img
                   src={clubConfig.logo}
                   alt={`${clubConfig.name} Logo`}
-                  className="w-6 h-6"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
                     const svg = e.currentTarget.nextElementSibling as HTMLElement;
@@ -271,7 +315,7 @@ export default function DashboardLayout({
                   }}
                 />
                 <svg
-                  className="w-5 h-5 hidden"
+                  className="w-full h-full hidden"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -285,44 +329,9 @@ export default function DashboardLayout({
                   />
                 </svg>
               </div>
-              <span className="ml-2 font-bold text-gray-900">{clubConfig.shortName}</span>
+              <span className="ml-3 font-bold text-gray-900">{clubConfig.shortName}</span>
             </div>
-
-            {/* Page indicators */}
-            <div className="hidden sm:flex items-center space-x-2">
-              {navigation.map((item) => (
-                <div
-                  key={item.id}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    activeTab === item.id ? "" : "bg-gray-300"
-                  }`}
-                  style={
-                    activeTab === item.id
-                      ? { backgroundColor: clubConfig.colors.primary }
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Mobile page indicators */}
-          <div className="flex sm:hidden justify-center pb-3">
-            <div className="flex items-center space-x-2">
-              {navigation.map((item) => (
-                <div
-                  key={item.id}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    activeTab === item.id ? "" : "bg-gray-300"
-                  }`}
-                  style={
-                    activeTab === item.id
-                      ? { backgroundColor: clubConfig.colors.primary }
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
+            <div className="w-10"></div>
           </div>
         </header>
 
@@ -332,15 +341,115 @@ export default function DashboardLayout({
           className="flex-1 overflow-y-auto touch-pan-y select-none"
           style={{ touchAction: "pan-y" }}
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:pt-8 ${
+            headerVisible ? "pt-20" : "pt-4"
+          } transition-all duration-300`}>
             {children}
           </div>
 
           {/* Swipe hint for mobile */}
-          <div className="lg:hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white text-xs px-3 py-2 rounded-full pointer-events-none opacity-50">
-            Swipe left/right to navigate
-          </div>
+          {showSwipeHint && (
+            <div className="lg:hidden fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white text-xs px-3 py-2 rounded-full pointer-events-none opacity-50 transition-opacity duration-300">
+              Swipe left/right to navigate
+            </div>
+          )}
         </main>
+
+        {/* Backdrop mask when menu is open */}
+        {navPillExpanded && (
+          <div
+            className="lg:hidden fixed inset-0 bg-white bg-opacity-30 backdrop-blur-sm z-20"
+            onClick={() => setNavPillExpanded(false)}
+          />
+        )}
+
+        {/* Floating navigation pill for mobile */}
+        <div className="lg:hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 z-30">
+          {/* Navigation pill */}
+          <div
+            className={`bg-white shadow-lg border border-gray-200 transition-all duration-150 ease-in-out ${
+              navPillExpanded
+                ? "rounded-2xl"
+                : "rounded-full"
+            }`}
+            style={{
+              overflow: 'hidden',
+            }}
+          >
+            {/* Collapsed view - dots */}
+            {!navPillExpanded && (
+              <button
+                onClick={() => setNavPillExpanded(true)}
+                className="px-4 py-2 flex items-center space-x-2"
+              >
+                {navigation.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      activeTab === item.id ? "" : "bg-gray-300"
+                    }`}
+                    style={
+                      activeTab === item.id
+                        ? { backgroundColor: clubConfig.colors.primary }
+                        : undefined
+                    }
+                  />
+                ))}
+              </button>
+            )}
+
+            {/* Expanded view - full navigation */}
+            {navPillExpanded && (
+              <div className="px-2 py-3">
+                <div className="flex flex-col space-y-1 min-w-[200px]">
+                  {navigation.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={item.path}
+                      onClick={() => {
+                        setNavPillExpanded(false);
+                      }}
+                      className={`flex items-center px-4 py-2 rounded-xl transition-all duration-150 ${
+                        activeTab === item.id
+                          ? ""
+                          : "hover:bg-gray-50"
+                      }`}
+                      style={
+                        activeTab === item.id
+                          ? {
+                              backgroundColor: clubConfig.colors.primaryLight,
+                              color: clubConfig.colors.primaryHover,
+                            }
+                          : { color: "#374151" }
+                      }
+                    >
+                      <svg
+                        className="w-5 h-5 mr-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d={item.icon}
+                        />
+                      </svg>
+                      <span className="text-sm font-medium">{item.name}</span>
+                      {activeTab === item.id && (
+                        <div
+                          className="ml-auto w-2 h-2 rounded-full"
+                          style={{ backgroundColor: clubConfig.colors.primary }}
+                        />
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
