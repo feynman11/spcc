@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { getClubConfig, type ClubConfig } from "./getClubConfig";
+import { getClubConfig } from "./getClubConfig";
+import type { ClubConfig } from "./club";
 
 /**
  * React hook to access club configuration in client components
