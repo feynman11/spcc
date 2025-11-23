@@ -4,10 +4,12 @@ import { trpc } from "@/lib/trpc/client";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useClubConfig } from "@/lib/config/useClubConfig";
 
 export default function WelcomePage() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const clubConfig = useClubConfig();
   const { data: currentUser, isLoading: userLoading } = trpc.members.getCurrentUser.useQuery();
 
   // Redirect if user is already approved
@@ -22,7 +24,10 @@ export default function WelcomePage() {
   if (status === "loading" || userLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+        <div
+          className="animate-spin rounded-full h-8 w-8 border-b-2"
+          style={{ borderColor: clubConfig.colors.primary }}
+        ></div>
       </div>
     );
   }
@@ -39,8 +44,8 @@ export default function WelcomePage() {
           {/* Logo */}
           <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-md">
             <img
-              src="/spcc_logo.jpg"
-              alt="South Peaks Cycle Club Logo"
+              src={clubConfig.logo}
+              alt={`${clubConfig.name} Logo`}
               className="w-16 h-16 object-contain"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
@@ -49,10 +54,11 @@ export default function WelcomePage() {
               }}
             />
             <svg
-              className="w-12 h-12 text-red-600 hidden"
+              className="w-12 h-12 hidden"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              style={{ color: clubConfig.colors.primary }}
             >
               <path
                 strokeLinecap="round"
@@ -65,7 +71,7 @@ export default function WelcomePage() {
 
           {/* Club Name */}
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            South Peaks Cycle Club
+            {clubConfig.name}
           </h1>
 
           {/* Welcome Message */}
@@ -86,7 +92,7 @@ export default function WelcomePage() {
               </svg>
             </div>
             <h2 className="text-2xl font-semibold text-gray-900">
-              Thank you for signing up!
+              {clubConfig.welcomeText.welcome}
             </h2>
             <p className="text-gray-600 text-lg leading-relaxed">
               Your account has been created successfully. We'll review your application and approve your account soon.

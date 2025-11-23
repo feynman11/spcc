@@ -1,10 +1,10 @@
-# South Peaks Cycle Club
+# Cycling Club Management System
 
-A comprehensive cycling club management application for South Peaks Cycle Club, based in Borrowash, Derbyshire. This application helps manage members, events, routes, and provides a platform for the cycling community to connect and organize rides.
+A comprehensive cycling club management application designed to help manage members, events, routes, and provide a platform for cycling communities to connect and organize rides. The application is fully customizable for any cycling club.
 
 ## Overview
 
-South Peaks Cycle Club is a web application designed to help manage all aspects of a cycling club, from member registration and profiles to event planning and route sharing. The application features interactive maps, GPX file handling, event registration, and member management capabilities.
+This web application is designed to help manage all aspects of a cycling club, from member registration and profiles to event planning and route sharing. The application features interactive maps, GPX file handling, event registration, and member management capabilities. All club-specific branding, colors, and content can be easily customized through a configuration file.
 
 ## Features
 
@@ -178,6 +178,138 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## Customizing for Your Club
+
+The application is designed to be easily customizable for any cycling club. All club-specific content is centralized in a single configuration file.
+
+### Club Configuration
+
+Edit the `club.config.ts` file in the root directory to customize your club's branding and information:
+
+```typescript
+export const clubConfig: ClubConfig = {
+  name: "Your Club Name",
+  shortName: "Short Name",
+  location: "City, State/Country",
+  description: "Your club description...",
+  logo: "/your-logo.jpg",
+  colors: {
+    primary: "#your-color",
+    primaryHover: "#your-hover-color",
+    primaryLight: "#your-light-color",
+  },
+  social: {
+    strava: "https://www.strava.com/clubs/your-club-id",
+    instagram: "https://www.instagram.com/your-club/",
+    email: "contact@yourclub.com",
+  },
+  metadata: {
+    title: "Your Club Name",
+    description: "Your club tagline",
+  },
+  welcomeText: {
+    home: "Welcome to Your Club Name",
+    signin: "Join our community of passionate cyclists",
+    welcome: "Thank you for signing up!",
+  },
+  github: "https://github.com/your-org/your-repo", // Optional
+};
+```
+
+### Customization Steps
+
+1. **Update Club Information**:
+   - Change `name` and `shortName` to your club's name
+   - Update `location` with your club's location
+   - Modify `description` with your club's mission and information
+
+2. **Add Your Logo**:
+   - Place your club logo in the `public/` directory
+   - Update the `logo` path in the config (e.g., `/your-logo.jpg`)
+   - The logo should be square or rectangular and will be displayed throughout the application
+
+3. **Customize Colors**:
+   - Set `primary` to your club's primary brand color (hex format)
+   - Set `primaryHover` to a slightly darker shade for hover states
+   - Set `primaryLight` to a very light tint of your primary color (used for backgrounds)
+   - These colors will be used throughout the application for buttons, links, and accents
+
+4. **Update Social Media Links**:
+   - Add your Strava club URL (if applicable)
+   - Add your Instagram profile URL (if applicable)
+   - Update the `email` with your club's contact email
+   - Remove any social links you don't use by setting them to `undefined`
+
+5. **Customize Welcome Messages**:
+   - Update `welcomeText.home` for the main heading on the home page
+   - Update `welcomeText.signin` for the tagline on the sign-in page
+   - Update `welcomeText.welcome` for the welcome message shown to new users
+
+6. **Update Metadata**:
+   - Change `metadata.title` for the browser tab title
+   - Change `metadata.description` for the site's meta description
+
+### Example Configuration
+
+Here's an example for a fictional cycling club:
+
+```typescript
+export const clubConfig: ClubConfig = {
+  name: "Mountain View Cycling Club",
+  shortName: "MVCC",
+  location: "Mountain View, California",
+  description:
+    "Based in the heart of Silicon Valley, we're a passionate community of cyclists exploring the beautiful Bay Area trails and roads. Whether you're a beginner or an experienced rider, MVCC welcomes cyclists of all abilities.",
+  logo: "/mvcc_logo.png",
+  colors: {
+    primary: "#2563eb",      // Blue
+    primaryHover: "#1d4ed8",  // Darker blue
+    primaryLight: "#eff6ff",  // Very light blue
+  },
+  social: {
+    strava: "https://www.strava.com/clubs/123456",
+    instagram: "https://www.instagram.com/mvcc/",
+    email: "info@mvcc.org",
+  },
+  metadata: {
+    title: "Mountain View Cycling Club",
+    description: "Join our community of passionate cyclists in the Bay Area",
+  },
+  welcomeText: {
+    home: "Welcome to Mountain View Cycling Club",
+    signin: "Join our community of passionate cyclists",
+    welcome: "Thank you for signing up!",
+  },
+};
+```
+
+### What Gets Customized
+
+When you update `club.config.ts`, the following will automatically change throughout the application:
+
+- **Home Page**: Club name, description, logo, social links, welcome message
+- **Sign In Page**: Club name, logo, tagline
+- **Welcome Page**: Club name, logo
+- **Dashboard**: Club name references, colors
+- **Navigation**: Logo, club name in sidebar
+- **Metadata**: Browser title, favicon, meta description
+- **Colors**: All primary brand colors throughout the UI
+- **Background**: Gradient background using your primary light color
+
+### Logo Requirements
+
+- **Format**: JPG, PNG, or SVG
+- **Location**: Place in the `public/` directory
+- **Size**: Recommended 512x512px or larger (will be scaled as needed)
+- **Fallback**: If the logo fails to load, a default icon will be displayed
+
+### Color Tips
+
+- Use a color picker tool to find your exact brand colors
+- For `primaryHover`, use a color that's 10-20% darker than `primary`
+- For `primaryLight`, use a very light tint (around 5-10% opacity) of your primary color
+- Ensure sufficient contrast for accessibility (WCAG AA minimum)
+
 ## Project Structure
 
 ```
@@ -202,6 +334,10 @@ spcc/
 │   ├── ElevationProfile.tsx # Route elevation visualization
 │   └── ...                  # Other UI components
 ├── lib/                      # Utility libraries
+│   ├── config/              # Configuration utilities
+│   │   ├── club.ts          # ClubConfig type definition
+│   │   ├── getClubConfig.ts # Server-side config access
+│   │   └── useClubConfig.ts # Client-side config hook
 │   ├── prisma.ts            # Prisma client singleton
 │   ├── minio.ts             # MinIO client configuration
 │   └── trpc/                # tRPC client/server setup
@@ -214,7 +350,8 @@ spcc/
 │       └── root.ts          # Root router
 ├── prisma/                   # Prisma configuration
 │   └── schema.prisma        # Database schema
-├── public/                   # Static assets
+├── public/                   # Static assets (place your logo here)
+├── club.config.ts           # Club configuration (CUSTOMIZE THIS!)
 ├── auth.ts                   # NextAuth configuration
 ├── docker-compose.yml        # Docker Compose configuration
 ├── Dockerfile               # Docker image definition
@@ -389,10 +526,13 @@ This application was migrated from a Convex-based application. Key architectural
 
 ## Support
 
-For issues, questions, or contributions, please contact:
-- Email: info@southpeakscc.co.uk
-- Strava: https://www.strava.com/clubs/451869
-- Instagram: https://www.instagram.com/southpeakscc/
+For issues, questions, or contributions related to this application:
+
+- Check the [Issues](https://github.com/feynman11/spcc/issues) page for known issues
+- Create a new issue for bugs or feature requests
+- Refer to the customization section above for club-specific configuration
+
+**Note**: The contact information shown in the application (email, social links) is configured in `club.config.ts` and will reflect your club's information after customization.
 
 ## License
 

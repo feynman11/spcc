@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from "react";
 import { SignOutButton } from "@/components/SignOutButton";
 import { trpc } from "@/lib/trpc/client";
 import Link from "next/link";
+import { useClubConfig } from "@/lib/config/useClubConfig";
 
 export default function DashboardLayout({
   children,
@@ -15,6 +16,7 @@ export default function DashboardLayout({
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
+  const clubConfig = useClubConfig();
   const { data: user } = trpc.members.getCurrentMember.useQuery();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -100,7 +102,10 @@ export default function DashboardLayout({
   if (status === "loading") {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+        <div
+          className="animate-spin rounded-full h-8 w-8 border-b-2"
+          style={{ borderColor: clubConfig.colors.primary }}
+        ></div>
       </div>
     );
   }
@@ -131,8 +136,8 @@ export default function DashboardLayout({
           <div className="flex items-center px-6 py-6 border-b border-gray-100">
             <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
               <img
-                src="/spcc_logo.jpg"
-                alt="South Peaks Cycle Club Logo"
+                src={clubConfig.logo}
+                alt={`${clubConfig.name} Logo`}
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
@@ -141,10 +146,11 @@ export default function DashboardLayout({
                 }}
               />
               <svg
-                className="w-full h-full text-red-600 hidden"
+                className="w-full h-full hidden"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                style={{ color: clubConfig.colors.primary }}
               >
                 <path
                   strokeLinecap="round"
@@ -155,7 +161,7 @@ export default function DashboardLayout({
               </svg>
             </div>
             <div className="ml-3">
-              <h1 className="text-lg font-bold text-gray-900">South Peaks</h1>
+              <h1 className="text-lg font-bold text-gray-900">{clubConfig.shortName}</h1>
               <p className="text-xs text-gray-500">Cycle Club</p>
             </div>
           </div>
@@ -169,9 +175,18 @@ export default function DashboardLayout({
                 onClick={() => setSidebarOpen(false)}
                 className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
                   activeTab === item.id
-                    ? "bg-red-50 text-red-700 border border-red-100"
+                    ? "border"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }`}
+                style={
+                  activeTab === item.id
+                    ? {
+                        backgroundColor: clubConfig.colors.primaryLight,
+                        color: clubConfig.colors.primaryHover,
+                        borderColor: clubConfig.colors.primaryLight,
+                      }
+                    : undefined
+                }
               >
                 <svg
                   className="w-5 h-5 mr-3"
@@ -194,7 +209,12 @@ export default function DashboardLayout({
           {/* User section */}
           <div className="p-4 border-t border-gray-100">
             <div className="flex items-center mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center"
+                style={{
+                  background: `linear-gradient(to bottom right, ${clubConfig.colors.primary}, #f97316)`,
+                }}
+              >
                 <span className="text-white font-semibold text-sm">
                   {user?.firstName?.charAt(0) ||
                     session?.user?.email?.charAt(0) ||
@@ -241,8 +261,8 @@ export default function DashboardLayout({
             <div className="flex items-center">
               <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
                 <img
-                  src="/spcc_logo.jpg"
-                  alt="South Peaks Cycle Club Logo"
+                  src={clubConfig.logo}
+                  alt={`${clubConfig.name} Logo`}
                   className="w-6 h-6"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
@@ -251,10 +271,11 @@ export default function DashboardLayout({
                   }}
                 />
                 <svg
-                  className="w-5 h-5 text-red-600 hidden"
+                  className="w-5 h-5 hidden"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  style={{ color: clubConfig.colors.primary }}
                 >
                   <path
                     strokeLinecap="round"
@@ -264,7 +285,7 @@ export default function DashboardLayout({
                   />
                 </svg>
               </div>
-              <span className="ml-2 font-bold text-gray-900">South Peaks</span>
+              <span className="ml-2 font-bold text-gray-900">{clubConfig.shortName}</span>
             </div>
 
             {/* Page indicators */}
@@ -273,8 +294,13 @@ export default function DashboardLayout({
                 <div
                   key={item.id}
                   className={`w-2 h-2 rounded-full transition-colors ${
-                    activeTab === item.id ? "bg-red-600" : "bg-gray-300"
+                    activeTab === item.id ? "" : "bg-gray-300"
                   }`}
+                  style={
+                    activeTab === item.id
+                      ? { backgroundColor: clubConfig.colors.primary }
+                      : undefined
+                  }
                 />
               ))}
             </div>
@@ -287,8 +313,13 @@ export default function DashboardLayout({
                 <div
                   key={item.id}
                   className={`w-2 h-2 rounded-full transition-colors ${
-                    activeTab === item.id ? "bg-red-600" : "bg-gray-300"
+                    activeTab === item.id ? "" : "bg-gray-300"
                   }`}
+                  style={
+                    activeTab === item.id
+                      ? { backgroundColor: clubConfig.colors.primary }
+                      : undefined
+                  }
                 />
               ))}
             </div>

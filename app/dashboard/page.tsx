@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AdminStats } from "@/components/AdminStats";
 import { usePageViewTracking } from "@/lib/analytics";
+import { useClubConfig } from "@/lib/config/useClubConfig";
 
 function DashboardContent() {
   usePageViewTracking();
   const router = useRouter();
+  const clubConfig = useClubConfig();
   const { data: currentMember, isLoading: memberLoading } = trpc.members.getCurrentMember.useQuery();
   const { data: upcomingEvents, isLoading: eventsLoading } = trpc.events.getUpcomingEvents.useQuery();
   const { data: allRoutes, isLoading: routesLoading } = trpc.routes.getAllRoutes.useQuery();
@@ -20,7 +22,10 @@ function DashboardContent() {
   if (memberLoading || eventsLoading || routesLoading) {
     return (
       <div className="flex justify-center items-center min-h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+        <div
+          className="animate-spin rounded-full h-8 w-8 border-b-2"
+          style={{ borderColor: clubConfig.colors.primary }}
+        ></div>
       </div>
     );
   }
@@ -31,7 +36,7 @@ function DashboardContent() {
       <div className="space-y-8">
         <div className="text-center lg:text-left">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Welcome to South Peaks Cycle Club
+            Welcome to {clubConfig.name}
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl">
             Complete your member profile to access all club features and participate in events.
@@ -40,12 +45,16 @@ function DashboardContent() {
 
         <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-2xl p-8">
           <div className="flex items-start space-x-4">
-            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: clubConfig.colors.primaryLight }}
+            >
               <svg
-                className="w-6 h-6 text-red-600"
+                className="w-6 h-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                style={{ color: clubConfig.colors.primary }}
               >
                 <path
                   strokeLinecap="round"
@@ -56,16 +65,29 @@ function DashboardContent() {
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-red-900 mb-2">
+              <h3
+                className="text-lg font-semibold mb-2"
+                style={{ color: clubConfig.colors.primaryHover }}
+              >
                 Create Your Member Profile
               </h3>
-              <p className="text-red-700 mb-4">
+              <p
+                className="mb-4"
+                style={{ color: clubConfig.colors.primaryHover }}
+              >
                 Join the community! Complete your member profile to access all club features, 
                 participate in events, and connect with fellow cyclists.
               </p>
               <button
                 onClick={() => router.push("/members")}
-                className="bg-red-600 text-white px-6 py-3 rounded-xl hover:bg-red-700 transition-colors font-medium inline-flex items-center"
+                className="text-white px-6 py-3 rounded-xl transition-colors font-medium inline-flex items-center"
+                style={{ backgroundColor: clubConfig.colors.primary }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = clubConfig.colors.primaryHover;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = clubConfig.colors.primary;
+                }}
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -90,8 +112,7 @@ function DashboardContent() {
           Welcome back, {currentMember.firstName}
         </h1>
         <p className="text-xl text-gray-600 max-w-2xl">
-          Ready for your next adventure? Here's what's happening at South Peaks
-          Cycle Club.
+          Ready for your next adventure? Here's what's happening at {clubConfig.shortName}.
         </p>
       </div>
 
@@ -99,12 +120,16 @@ function DashboardContent() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center">
-            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center"
+              style={{ backgroundColor: clubConfig.colors.primaryLight }}
+            >
               <svg
-                className="w-6 h-6 text-red-600"
+                className="w-6 h-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                style={{ color: clubConfig.colors.primary }}
               >
                 <path
                   strokeLinecap="round"
@@ -205,7 +230,10 @@ function DashboardContent() {
                         {event.startTime}
                       </p>
                       {event.route && (
-                        <p className="text-sm text-red-600 font-medium">
+                        <p
+                          className="text-sm font-medium"
+                          style={{ color: clubConfig.colors.primary }}
+                        >
                           {event.route.name}
                         </p>
                       )}
@@ -280,7 +308,10 @@ function DashboardContent() {
                         <p className="text-sm text-gray-500 mb-2">
                           {route.distance}km • +{route.elevationAscent ?? route.elevation}m / -{route.elevationDescent ?? 0}m
                         </p>
-                        <p className="text-sm text-red-600 font-medium">
+                        <p
+                          className="text-sm font-medium"
+                          style={{ color: clubConfig.colors.primary }}
+                        >
                           {route.startLocation}
                         </p>
                       </div>

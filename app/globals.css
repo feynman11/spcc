@@ -42,11 +42,14 @@
 :root {
   --color-light: #ffffff;
   --color-dark: #171717;
-  --spcc-red: #dc2626;
-  --spcc-red-hover: #b91c1c;
-  --spcc-red-light: #fef2f2;
-  --spcc-dark: #1f2937;
-  --spcc-gray: #6b7280;
+  --club-primary: #dc2626;
+  --club-primary-hover: #b91c1c;
+  --club-primary-light: #fef2f2;
+  --club-dark: #1f2937;
+  --club-gray: #6b7280;
+  --club-bg-gradient-start: rgba(254, 242, 242, 0.6);
+  --club-bg-gradient-mid: rgba(254, 242, 242, 0.5);
+  --club-bg-gradient-end: rgba(254, 242, 242, 0.6);
 }
 
 .accent-text {
@@ -55,7 +58,12 @@
 
 html {
   min-height: 100%;
-  background: linear-gradient(to bottom right, rgba(254, 242, 242, 0.6), rgba(254, 242, 242, 0.5), rgba(254, 242, 242, 0.6));
+  background: linear-gradient(
+    to bottom right,
+    var(--club-bg-gradient-start),
+    var(--club-bg-gradient-mid),
+    var(--club-bg-gradient-end)
+  );
 }
 
 body {

@@ -5,10 +5,12 @@ import { SignInForm } from "@/components/SignInForm";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { trpc } from "@/lib/trpc/client";
+import { useClubConfig } from "@/lib/config/useClubConfig";
 
 export default function SignInPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const clubConfig = useClubConfig();
   const { data: currentUser, isLoading: userLoading } = trpc.members.getCurrentUser.useQuery(
     undefined,
     { enabled: status === "authenticated" }
@@ -34,7 +36,10 @@ export default function SignInPage() {
   if (status === "loading" || (status === "authenticated" && userLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+        <div
+          className="animate-spin rounded-full h-8 w-8 border-b-2"
+          style={{ borderColor: clubConfig.colors.primary }}
+        ></div>
       </div>
     );
   }
@@ -45,8 +50,8 @@ export default function SignInPage() {
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <img
-              src="/spcc_logo.jpg"
-              alt="South Peaks Cycle Club Logo"
+              src={clubConfig.logo}
+              alt={`${clubConfig.name} Logo`}
               className="w-12 h-12"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
@@ -55,10 +60,11 @@ export default function SignInPage() {
               }}
             />
             <svg
-              className="w-8 h-8 text-red-600 hidden"
+              className="w-8 h-8 hidden"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              style={{ color: clubConfig.colors.primary }}
             >
               <path
                 strokeLinecap="round"
@@ -69,10 +75,10 @@ export default function SignInPage() {
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            South Peaks Cycle Club
+            {clubConfig.name}
           </h1>
           <p className="text-gray-600">
-            Join our community of passionate cyclists
+            {clubConfig.welcomeText.signin}
           </p>
         </div>
         <SignInForm />
