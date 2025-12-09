@@ -3,7 +3,12 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   images: {
-    domains: ['southpeakscc.co.uk'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'southpeakscc.co.uk',
+      },
+    ],
   },
 };
 
