@@ -1,6 +1,4 @@
-# Base image with Bun 1.3.1
-# Using fully qualified name for Podman compatibility
-FROM docker.io/oven/bun:1.3.1 AS base
+FROM docker.io/oven/bun:1.3.4 AS base
 WORKDIR /app
 
 # Install dependencies only when needed
